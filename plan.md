@@ -395,7 +395,7 @@ Steg:
 
 ## Fas 4: Huvudfönster och panelmodell
 
-Status: Ej påbörjad
+Status: Pågår
 
 Syfte:
 
@@ -407,7 +407,7 @@ Bygger på:
 
 ### Arbetspaket 4.1: Huvudlayout
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -422,14 +422,14 @@ Verifiering:
 
 Steg:
 
-- [ ] Skapa huvudfönster.
-- [ ] Lägg in projektnamn.
-- [ ] Lägg in vyval.
-- [ ] Lägg in tidsintervallkontroll.
-- [ ] Lägg in sökning.
-- [ ] Lägg in `Lägg till objekt`.
-- [ ] Lägg in konfigurationsåtkomst.
-- [ ] Lägg in diagramyta.
+- [x] Skapa huvudfönster.
+- [x] Lägg in projektnamn.
+- [x] Lägg in vyval.
+- [x] Lägg in tidsintervallkontroll.
+- [x] Lägg in sökning.
+- [x] Lägg in `Lägg till objekt`.
+- [x] Lägg in konfigurationsåtkomst.
+- [x] Lägg in diagramyta.
 
 ### Arbetspaket 4.2: Paneler och dialogflöden
 

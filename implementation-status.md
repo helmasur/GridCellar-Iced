@@ -16,7 +16,9 @@
 - Arbetspaket 3.2, validering och spärrregler, är verifierat.
 - Arbetspaket 3.3, vyberäkning, är verifierat.
 - Arbetspaket 3.4, lokal persistens, är verifierat.
-- Fas 4, huvudfönster och panelmodell, är nästa fas.
+- Fas 4, huvudfönster och panelmodell, pågår.
+- Arbetspaket 4.1, huvudlayout, är verifierat.
+- Arbetspaket 4.2, paneler och dialogflöden, är nästa arbetspaket.
 
 ## Blockeringar
 
