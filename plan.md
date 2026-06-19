@@ -644,7 +644,7 @@ Steg:
 
 ## Fas 7: Vyer, filter och sökning
 
-Status: Ej påbörjad
+Status: Pågår
 
 Syfte:
 
@@ -657,7 +657,7 @@ Bygger på:
 
 ### Arbetspaket 7.1: Vyhantering
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -672,13 +672,13 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera vyval.
-- [ ] Implementera ny vy.
-- [ ] Implementera spara vy.
-- [ ] Implementera byta namn.
-- [ ] Implementera duplicera vy.
-- [ ] Implementera ta bort vy.
-- [ ] Implementera status för osparade vyändringar.
+- [x] Implementera vyval.
+- [x] Implementera ny vy.
+- [x] Implementera spara vy.
+- [x] Implementera byta namn.
+- [x] Implementera duplicera vy.
+- [x] Implementera ta bort vy.
+- [x] Implementera status för osparade vyändringar.
 
 ### Arbetspaket 7.2: Gruppering och datumfältsval
 

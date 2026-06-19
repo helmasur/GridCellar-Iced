@@ -28,7 +28,9 @@
 - Arbetspaket 6.1, visningsläge, är verifierat.
 - Arbetspaket 6.2, skapande och redigering, är verifierat.
 - Arbetspaket 6.3, duplicera och ta bort, är verifierat.
-- Fas 7, vyer, filter och sökning, är nästa fas.
+- Fas 7, vyer, filter och sökning, pågår.
+- Arbetspaket 7.1, vyhantering, är verifierat.
+- Arbetspaket 7.2, gruppering och datumfältsval, är nästa arbetspaket.
 
 ## Blockeringar
 

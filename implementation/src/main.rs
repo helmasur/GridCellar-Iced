@@ -2,7 +2,7 @@ use gridcellar::editor::{DraftValue, ObjectDraft};
 use gridcellar::label::diagram_label;
 use gridcellar::model::{
     DetailFormat, Field, FieldId, FieldType, FieldValue, ListValue, ListValueId, ObjectId, Project,
-    ProjectId, TimeRange, ValueMode, ViewId,
+    ProjectId, TimeRange, ValueMode, View, ViewId,
 };
 use gridcellar::validation::{ValidationError, can_remove_list_value, can_remove_or_change_field};
 use iced::widget::{
@@ -16,7 +16,11 @@ const NARROW_WIDTH: f32 = 720.0;
 struct App {
     project: Project,
     search: String,
-    selected_view: Option<&'static str>,
+    active_view_id: ViewId,
+    view_draft: View,
+    view_dirty: bool,
+    view_name_draft: String,
+    next_view_number: usize,
     panel: Option<Panel>,
     project_settings: ProjectSettingsDraft,
     new_field: FieldDraft,
@@ -38,10 +42,15 @@ impl Default for App {
             ViewId::new("all-objects"),
         );
         let project_settings = ProjectSettingsDraft::from_project(&project);
+        let view_draft = project.views[0].clone();
         Self {
+            active_view_id: project.last_used_view_id.clone(),
+            view_name_draft: view_draft.name.clone(),
+            view_draft,
+            view_dirty: false,
+            next_view_number: 2,
             project,
             search: String::new(),
-            selected_view: None,
             panel: None,
             project_settings,
             new_field: FieldDraft::default(),
@@ -113,7 +122,14 @@ enum Panel {
 #[derive(Clone, Debug)]
 enum Message {
     SearchChanged(String),
-    ViewSelected(&'static str),
+    ViewSelected(String),
+    NewView,
+    SaveView,
+    ViewNameChanged(String),
+    RenameView,
+    DuplicateView,
+    ResetView,
+    DeleteView,
     RangeSelected(&'static str),
     ProjectNameChanged(String),
     RowHeightChanged(String),
@@ -176,7 +192,14 @@ fn main() -> iced::Result {
 fn update(app: &mut App, message: Message) {
     match message {
         Message::SearchChanged(value) => app.search = value,
-        Message::ViewSelected(value) => app.selected_view = Some(value),
+        Message::ViewSelected(value) => select_view(app, &value),
+        Message::NewView => new_view(app),
+        Message::SaveView => save_view(app),
+        Message::ViewNameChanged(value) => app.view_name_draft = value,
+        Message::RenameView => rename_view(app),
+        Message::DuplicateView => duplicate_view(app),
+        Message::ResetView => reset_view(app),
+        Message::DeleteView => delete_view(app),
         Message::RangeSelected(value) => {
             app.project.diagram_settings.time_range = time_range_from_label(value);
             app.project_settings.time_range = value;
@@ -352,6 +375,13 @@ fn page<'a>(
     panel: Option<Panel>,
 ) -> Element<'a, Message> {
     let controls = row![
+        text_input("Vynamn", &app.view_name_draft).on_input(Message::ViewNameChanged),
+        button("Ny vy").on_press(Message::NewView),
+        button("Spara vy").on_press(Message::SaveView),
+        button("Byt namn").on_press(Message::RenameView),
+        button("Duplicera vy").on_press(Message::DuplicateView),
+        button("Återställ vy").on_press(Message::ResetView),
+        button("Ta bort vy").on_press(Message::DeleteView),
         button("Filter (0)").on_press(Message::OpenFilters),
         button("Nivå 1"),
         button("Nivå 2"),
@@ -365,6 +395,12 @@ fn page<'a>(
         column![
             text("Diagram").size(22),
             text("Tidslinjediagrammets huvudyta"),
+            text(if app.view_dirty {
+                "Osparade vyändringar"
+            } else {
+                "Vyn är sparad"
+            })
+            .size(12),
             row![
                 container(text(preview_diagram_label(app)))
                     .padding(8)
@@ -457,9 +493,16 @@ fn panel_overlay(app: &App, panel: Panel, size: Size) -> Element<'_, Message> {
 }
 
 fn view_picker(app: &App) -> Element<'_, Message> {
+    let options: Vec<String> = app.project.views.iter().map(|view| view.name.clone()).collect();
+    let selected = app
+        .project
+        .views
+        .iter()
+        .find(|view| view.id == app.active_view_id)
+        .map(|view| view.name.clone());
     pick_list(
-        ["Alla objekt"],
-        app.selected_view.or(Some("Alla objekt")),
+        options,
+        selected,
         Message::ViewSelected,
     )
     .placeholder("Vy")
@@ -1494,6 +1537,111 @@ fn save_object(app: &mut App) {
 fn reset_object(app: &mut App) {
     app.object_draft = app.saved_object_draft.clone();
     app.object_status = None;
+}
+
+fn select_view(app: &mut App, name: &str) {
+    if let Some(view) = app.project.views.iter().find(|view| view.name == name) {
+        app.active_view_id = view.id.clone();
+        app.project.last_used_view_id = view.id.clone();
+        app.view_draft = view.clone();
+        app.view_name_draft = view.name.clone();
+        app.view_dirty = false;
+    }
+}
+
+fn new_view(app: &mut App) {
+    let id = ViewId::new(format!("view-{}", app.next_view_number));
+    let name = unique_view_name(app, "Ny vy");
+    let view = View {
+        id: id.clone(),
+        project_id: app.project.id.clone(),
+        name: name.clone(),
+        grouping: Vec::new(),
+        filters: Vec::new(),
+        excluded_date_field_ids: Vec::new(),
+    };
+    app.next_view_number += 1;
+    app.project.views.push(view.clone());
+    app.active_view_id = id;
+    app.view_draft = view;
+    app.view_name_draft = name;
+    app.view_dirty = false;
+}
+
+fn save_view(app: &mut App) {
+    if let Some(view) = app
+        .project
+        .views
+        .iter_mut()
+        .find(|view| view.id == app.active_view_id)
+    {
+        *view = app.view_draft.clone();
+        app.view_dirty = false;
+    }
+}
+
+fn rename_view(app: &mut App) {
+    let name = app.view_name_draft.trim();
+    if name.is_empty()
+        || app
+            .project
+            .views
+            .iter()
+            .any(|view| view.id != app.active_view_id && view.name.eq_ignore_ascii_case(name))
+    {
+        return;
+    }
+    app.view_draft.name = name.to_owned();
+    app.view_dirty = true;
+    save_view(app);
+}
+
+fn duplicate_view(app: &mut App) {
+    let mut view = app.view_draft.clone();
+    view.id = ViewId::new(format!("view-{}", app.next_view_number));
+    view.name = unique_view_name(app, &format!("{} kopia", view.name));
+    app.next_view_number += 1;
+    app.active_view_id = view.id.clone();
+    app.view_name_draft = view.name.clone();
+    app.project.views.push(view.clone());
+    app.view_draft = view;
+    app.view_dirty = false;
+}
+
+fn reset_view(app: &mut App) {
+    app.view_draft.grouping.clear();
+    app.view_draft.filters.clear();
+    app.view_draft.excluded_date_field_ids.clear();
+    app.view_dirty = true;
+}
+
+fn delete_view(app: &mut App) {
+    if app.project.views.len() <= 1 {
+        return;
+    }
+    app.project
+        .views
+        .retain(|view| view.id != app.active_view_id);
+    let view = app.project.views[0].clone();
+    app.active_view_id = view.id.clone();
+    app.project.last_used_view_id = view.id.clone();
+    app.view_name_draft = view.name.clone();
+    app.view_draft = view;
+    app.view_dirty = false;
+}
+
+fn unique_view_name(app: &App, base: &str) -> String {
+    if !app.project.views.iter().any(|view| view.name == base) {
+        return base.to_owned();
+    }
+    let mut number = 2;
+    loop {
+        let candidate = format!("{base} {number}");
+        if !app.project.views.iter().any(|view| view.name == candidate) {
+            return candidate;
+        }
+        number += 1;
+    }
 }
 
 fn duplicate_object(app: &mut App) {
