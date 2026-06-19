@@ -519,3 +519,8 @@
 - Begrepp som kräver medvetenhet om ett parallellt spår, exempelvis “båda implementationerna”, skall inte förekomma efter inledningen.
 - Planen skall vara formulerad på minsta gemensamma nivå och inte luta mot webbspecifika, native-specifika eller ramverksspecifika lösningar.
 
+## Implementationsstart
+
+- 2026-06-19: `blueprint.md` är det fullständiga styrande produktmålet för Iced-implementationen.
+- 2026-06-19: MVP-gränsen i `blueprint.md` gäller och implementationen skall inte ersättas av en förenklad prototyp.
+- 2026-06-19: Manuella acceptanstest skall användas som funktionell slutverifiering.

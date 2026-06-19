@@ -49,7 +49,7 @@ GridCellar/
 
 ## Fas 0: Planlåsning och arbetsregler
 
-Status: Ej påbörjad
+Status: Klar
 
 Syfte:
 
@@ -64,7 +64,7 @@ Bygger på:
 
 ### Arbetspaket 0.1: Bekräfta MVP
 
-Status: Ej påbörjad
+Status: Klar
 
 Scope:
 
@@ -78,13 +78,13 @@ Verifiering:
 
 Steg:
 
-- [ ] Bekräfta att `blueprint.md` är styrande.
-- [ ] Bekräfta att MVP-gränsen i `blueprint.md` gäller.
-- [ ] Bekräfta att acceptanstest skall användas som funktionell verifiering.
+- [x] Bekräfta att `blueprint.md` är styrande.
+- [x] Bekräfta att MVP-gränsen i `blueprint.md` gäller.
+- [x] Bekräfta att acceptanstest skall användas som funktionell verifiering.
 
 ### Arbetspaket 0.2: Status och avvikelser
 
-Status: Ej påbörjad
+Status: Klar
 
 Scope:
 
@@ -97,13 +97,13 @@ Verifiering:
 
 Steg:
 
-- [ ] Skapa statussektion i implementationens README eller motsvarande.
-- [ ] Skapa enkel avvikelselogg.
-- [ ] Ange att funktionella avvikelser skall lösas eller beslutas innan MVP räknas som klar.
+- [x] Skapa statussektion i implementationens README eller motsvarande.
+- [x] Skapa enkel avvikelselogg.
+- [x] Ange att funktionella avvikelser skall lösas eller beslutas innan MVP räknas som klar.
 
 ## Fas 1: Kontrakt före implementation
 
-Status: Ej påbörjad
+Status: Pågår
 
 Syfte:
 
@@ -115,7 +115,7 @@ Bygger på:
 
 ### Arbetspaket 1.1: Modellkontrakt
 
-Status: Ej påbörjad
+Status: Klar
 
 Scope:
 
@@ -142,10 +142,10 @@ Verifiering:
 
 Steg:
 
-- [ ] Skapa `model-contract.md`.
-- [ ] Beskriv varje entitet och dess minsta nödvändiga egenskaper.
-- [ ] Beskriv vilka relationer som använder interna id:n.
-- [ ] Beskriv regler för tomma värden, flervärden och sortering.
+- [x] Skapa `model-contract.md`.
+- [x] Beskriv varje entitet och dess minsta nödvändiga egenskaper.
+- [x] Beskriv vilka relationer som använder interna id:n.
+- [x] Beskriv regler för tomma värden, flervärden och sortering.
 
 ### Arbetspaket 1.2: Testdata
 
