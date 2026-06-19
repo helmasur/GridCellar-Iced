@@ -149,7 +149,7 @@ Steg:
 
 ### Arbetspaket 1.2: Testdata
 
-Status: Ej påbörjad
+Status: Klar
 
 Scope:
 
@@ -177,9 +177,9 @@ Verifiering:
 
 Steg:
 
-- [ ] Skapa `testdata/gridcellar-sample.json` eller motsvarande projektfil.
-- [ ] Dokumentera syfte med varje särskilt testobjekt.
-- [ ] Kontrollera att testdata följer modellkontraktet.
+- [x] Skapa `testdata/gridcellar-sample.json` eller motsvarande projektfil.
+- [x] Dokumentera syfte med varje särskilt testobjekt.
+- [x] Kontrollera att testdata följer modellkontraktet.
 
 ### Arbetspaket 1.3: Acceptanstest
 

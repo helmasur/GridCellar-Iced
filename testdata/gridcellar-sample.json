@@ -1,0 +1,77 @@
+{
+  "contractFixture": true,
+  "formatNotice": "Testrepresentation only; not a decided persistence or export format.",
+  "project": {
+    "id": "project-cellar-01",
+    "name": "Provkällaren",
+    "fieldOrder": [
+      "field-name",
+      "field-kind",
+      "field-origin",
+      "field-count",
+      "field-rating",
+      "field-bottled",
+      "field-best-before",
+      "field-notes",
+      "field-image"
+    ],
+    "diagramLabelFieldIds": ["field-name", "field-origin"],
+    "diagramSettings": {
+      "rowHeight": 40,
+      "groupRowHeight": 28,
+      "nameColumnWidth": 240,
+      "timeRange": {"mode": "show-all"}
+    },
+    "lastUsedViewId": "view-by-kind"
+  },
+  "fields": [
+    {"id": "field-name", "name": "Namn", "type": "text", "valueMode": "single", "required": false, "detailFormat": "title"},
+    {"id": "field-kind", "name": "Typ", "type": "list", "valueMode": "single", "required": false, "detailFormat": "chips"},
+    {"id": "field-origin", "name": "Ursprung", "type": "list", "valueMode": "multiple", "required": false, "detailFormat": "chips"},
+    {"id": "field-count", "name": "Antal", "type": "number", "numberKind": "integer", "valueMode": "single", "required": false, "detailFormat": "number"},
+    {"id": "field-rating", "name": "Omdöme", "type": "number", "numberKind": "decimal", "valueMode": "single", "required": false, "detailFormat": "number"},
+    {"id": "field-bottled", "name": "Tappdatum", "type": "date", "valueMode": "multiple", "required": false, "detailFormat": "date"},
+    {"id": "field-best-before", "name": "Bäst från", "type": "date", "valueMode": "single", "required": false, "detailFormat": "date"},
+    {"id": "field-notes", "name": "Anteckning", "type": "text", "valueMode": "single", "required": false, "detailFormat": "long-text"},
+    {"id": "field-image", "name": "Etikettbild", "type": "image", "valueMode": "single", "required": false, "detailFormat": "image"}
+  ],
+  "listValues": [
+    {"id": "kind-beer", "fieldId": "field-kind", "name": "Öl", "order": 0},
+    {"id": "kind-wine", "fieldId": "field-kind", "name": "Vin", "order": 1},
+    {"id": "kind-other", "fieldId": "field-kind", "name": "Annat", "order": 2},
+    {"id": "origin-sweden", "fieldId": "field-origin", "name": "Sverige", "order": 0},
+    {"id": "origin-france", "fieldId": "field-origin", "name": "Frankrike", "order": 1},
+    {"id": "origin-italy", "fieldId": "field-origin", "name": "Italien", "order": 2},
+    {"id": "origin-belgium", "fieldId": "field-origin", "name": "Belgien", "order": 3}
+  ],
+  "objects": [
+    {"id": "object-01", "values": {"field-name": ["Källaröl A"], "field-kind": ["kind-beer"], "field-origin": ["origin-sweden"], "field-count": [6], "field-rating": [4.5], "field-bottled": ["2024-02-10"], "field-best-before": ["2027-02-10"], "field-notes": ["Komplett normalfall."], "field-image": [{"fixturePath": "images/generic-bottle.png"}]}},
+    {"id": "object-02", "values": {"field-name": ["Blandning B"], "field-kind": ["kind-wine"], "field-origin": ["origin-italy", "origin-france"], "field-count": [3], "field-rating": [3.75], "field-bottled": ["2023-09-01"], "field-best-before": ["2028-09-01"]}},
+    {"id": "object-03", "values": {"field-name": ["Samma dag"], "field-kind": ["kind-beer"], "field-origin": ["origin-belgium"], "field-bottled": ["2026-01-15"], "field-best-before": ["2026-01-15"]}},
+    {"id": "object-04", "values": {"field-name": ["Utan datum"], "field-kind": ["kind-other"], "field-origin": ["origin-sweden"], "field-count": [1]}},
+    {"id": "object-05", "values": {"field-name": ["Glest objekt"], "field-kind": [], "field-origin": [], "field-count": [], "field-rating": [], "field-bottled": [], "field-best-before": [], "field-notes": [], "field-image": []}},
+    {"id": "object-06", "values": {"field-name": ["Flera tappningar"], "field-kind": ["kind-beer"], "field-origin": ["origin-sweden"], "field-bottled": ["2022-05-01", "2022-06-01", "2022-06-01"], "field-best-before": ["2029-05-01"]}},
+    {"id": "object-07", "values": {"field-name": ["Lång anteckning"], "field-kind": ["kind-wine"], "field-notes": ["Text med interna   mellanslag och en längre beskrivning som skall radbrytas i detaljpanelen."]}},
+    {"id": "object-08", "values": {"field-name": ["Manuell ordning"], "field-kind": ["kind-beer"], "field-origin": ["origin-belgium", "origin-france"], "field-count": [2], "field-bottled": ["2025-03-20"]}},
+    {"id": "object-09", "values": {"field-name": ["Lång lagring"], "field-kind": ["kind-wine"], "field-origin": ["origin-france"], "field-bottled": ["1998-10-12"], "field-best-before": ["2038-10-12"]}},
+    {"id": "object-10", "values": {"field-name": [], "field-origin": [], "field-kind": ["kind-other"], "field-count": [1], "field-bottled": ["2026-06-19"]}},
+    {"id": "object-11", "values": {"field-name": ["Noll antal"], "field-kind": ["kind-other"], "field-origin": ["origin-sweden"], "field-count": [0], "field-rating": [0.0], "field-bottled": ["2026-06-19"]}},
+    {"id": "object-12", "values": {"field-name": ["Källaröl A"], "field-kind": ["kind-beer"], "field-origin": ["origin-sweden"], "field-count": [6], "field-rating": [4.5], "field-bottled": ["2024-02-10"], "field-best-before": ["2027-02-10"]}}
+  ],
+  "views": [
+    {
+      "id": "view-all",
+      "name": "Alla objekt",
+      "grouping": [],
+      "filters": [],
+      "excludedDateFieldIds": []
+    },
+    {
+      "id": "view-by-kind",
+      "name": "Efter typ",
+      "grouping": [{"fieldId": "field-kind", "direction": "ascending"}],
+      "filters": [{"fieldId": "field-count", "operator": "greater-than", "operands": [0], "includeEmpty": false}],
+      "excludedDateFieldIds": ["field-bottled"]
+    }
+  ]
+}

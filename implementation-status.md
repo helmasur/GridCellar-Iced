@@ -5,7 +5,8 @@
 - Fas 0 är klar.
 - Fas 1 pågår.
 - Arbetspaket 1.1, modellkontrakt, är klart.
-- Arbetspaket 1.2, testdata, är nästa arbetspaket.
+- Arbetspaket 1.2, testdata, är klart.
+- Arbetspaket 1.3, acceptanstest, är nästa arbetspaket.
 - Ingen implementation har skapats.
 
 ## Blockeringar
