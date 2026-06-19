@@ -489,7 +489,7 @@ Steg:
 
 ### Arbetspaket 5.2: Fältadministration
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -503,16 +503,16 @@ Verifiering:
 
 Steg:
 
-- [ ] Visa fältlista.
-- [ ] Skapa nytt fält.
-- [ ] Ändra fältnamn.
-- [ ] Ändra fälttyp endast när regler tillåter det.
-- [ ] Ändra enkelvärde/flervärde endast när regler tillåter det.
-- [ ] Ändra obligatorisk status enligt regler.
-- [ ] Ändra detaljformat när formatval finns.
-- [ ] Sortera fält med upp-/nedkontroller.
-- [ ] Ta bort fält enligt spärrregler.
-- [ ] Visa användningssammanfattning.
+- [x] Visa fältlista.
+- [x] Skapa nytt fält.
+- [x] Ändra fältnamn.
+- [x] Ändra fälttyp endast när regler tillåter det.
+- [x] Ändra enkelvärde/flervärde endast när regler tillåter det.
+- [x] Ändra obligatorisk status enligt regler.
+- [x] Ändra detaljformat när formatval finns.
+- [x] Sortera fält med upp-/nedkontroller.
+- [x] Ta bort fält enligt spärrregler.
+- [x] Visa användningssammanfattning.
 
 ### Arbetspaket 5.3: Listvärdesadministration
 

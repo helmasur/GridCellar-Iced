@@ -1,6 +1,10 @@
-use gridcellar::model::{Project, ProjectId, TimeRange, ViewId};
+use gridcellar::model::{
+    DetailFormat, Field, FieldId, FieldType, Project, ProjectId, TimeRange, ValueMode, ViewId,
+};
+use gridcellar::validation::{ValidationError, can_remove_or_change_field};
 use iced::widget::{
-    button, column, container, opaque, pick_list, responsive, row, rule, stack, text, text_input,
+    button, checkbox, column, container, opaque, pick_list, responsive, row, rule, scrollable,
+    stack, text, text_input,
 };
 use iced::{Element, Fill, Length, Size};
 
@@ -12,6 +16,9 @@ struct App {
     selected_view: Option<&'static str>,
     panel: Option<Panel>,
     project_settings: ProjectSettingsDraft,
+    new_field: FieldDraft,
+    field_status: Option<String>,
+    next_field_number: usize,
 }
 
 impl Default for App {
@@ -27,6 +34,30 @@ impl Default for App {
             selected_view: None,
             panel: None,
             project_settings,
+            new_field: FieldDraft::default(),
+            field_status: None,
+            next_field_number: 1,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+struct FieldDraft {
+    name: String,
+    field_type: &'static str,
+    value_mode: &'static str,
+    required: bool,
+    detail_format: &'static str,
+}
+
+impl Default for FieldDraft {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            field_type: "Text",
+            value_mode: "Ett värde",
+            required: false,
+            detail_format: "Normal rad",
         }
     }
 }
@@ -73,6 +104,20 @@ enum Message {
     CustomStartChanged(String),
     CustomEndChanged(String),
     SaveProjectSettings,
+    NewFieldNameChanged(String),
+    NewFieldTypeChanged(&'static str),
+    NewFieldValueModeChanged(&'static str),
+    NewFieldRequiredChanged(bool),
+    NewFieldFormatChanged(&'static str),
+    CreateField,
+    RenameField(usize, String),
+    ChangeFieldType(usize, &'static str),
+    ChangeFieldValueMode(usize, &'static str),
+    ChangeFieldRequired(usize, bool),
+    ChangeFieldFormat(usize, &'static str),
+    MoveFieldUp(usize),
+    MoveFieldDown(usize),
+    RemoveField(usize),
     AddObject,
     OpenConfiguration,
     OpenFilters,
@@ -118,6 +163,28 @@ fn update(app: &mut App, message: Message) {
                 }
             }
         }
+        Message::NewFieldNameChanged(value) => app.new_field.name = value,
+        Message::NewFieldTypeChanged(value) => app.new_field.field_type = value,
+        Message::NewFieldValueModeChanged(value) => app.new_field.value_mode = value,
+        Message::NewFieldRequiredChanged(value) => app.new_field.required = value,
+        Message::NewFieldFormatChanged(value) => app.new_field.detail_format = value,
+        Message::CreateField => create_field(app),
+        Message::RenameField(index, value) => rename_field(app, index, value),
+        Message::ChangeFieldType(index, value) => change_field_type(app, index, value),
+        Message::ChangeFieldValueMode(index, value) => change_field_value_mode(app, index, value),
+        Message::ChangeFieldRequired(index, value) => change_field_required(app, index, value),
+        Message::ChangeFieldFormat(index, value) => change_field_format(app, index, value),
+        Message::MoveFieldUp(index) => {
+            if index > 0 {
+                app.project.fields.swap(index, index - 1);
+            }
+        }
+        Message::MoveFieldDown(index) => {
+            if index + 1 < app.project.fields.len() {
+                app.project.fields.swap(index, index + 1);
+            }
+        }
+        Message::RemoveField(index) => remove_field(app, index),
         Message::AddObject => app.panel = Some(Panel::Detail),
         Message::OpenConfiguration => app.panel = Some(Panel::Configuration),
         Message::OpenFilters => app.panel = Some(Panel::Filters),
@@ -253,7 +320,7 @@ fn panel_overlay(app: &App, panel: Panel, size: Size) -> Element<'_, Message> {
             "Nytt objekt",
             text("Detaljpanelen används senare för skapande, visning och redigering.").into(),
         ),
-        Panel::Configuration => ("Konfiguration", project_settings(app)),
+        Panel::Configuration => ("Konfiguration", configuration_panel(app)),
         Panel::Filters => (
             "Filter",
             text("Här visas och redigeras den aktiva vyns filter.").into(),
@@ -313,6 +380,18 @@ fn range_picker(app: &App) -> Element<'_, Message> {
     .into()
 }
 
+fn configuration_panel(app: &App) -> Element<'_, Message> {
+    scrollable(
+        column![
+            project_settings(app),
+            rule::horizontal(1),
+            field_administration(app),
+        ]
+        .spacing(20),
+    )
+    .into()
+}
+
 fn project_settings(app: &App) -> Element<'_, Message> {
     column![
         text("Projekt").size(20),
@@ -354,6 +433,365 @@ fn project_settings(app: &App) -> Element<'_, Message> {
     ]
     .spacing(12)
     .into()
+}
+
+fn field_administration(app: &App) -> Element<'_, Message> {
+    let mut fields = column![text("Fält").size(20)].spacing(10);
+
+    if app.project.fields.is_empty() {
+        fields = fields.push(text("Projektet saknar fält."));
+    }
+
+    for (index, field) in app.project.fields.iter().enumerate() {
+        let field_id = field.id.clone();
+        let object_count = app
+            .project
+            .objects
+            .iter()
+            .filter(|object| {
+                object
+                    .values
+                    .get(&field_id)
+                    .is_some_and(|values| !values.is_empty())
+            })
+            .count();
+        let view_count = app
+            .project
+            .views
+            .iter()
+            .filter(|view| {
+                view.grouping.iter().any(|group| group.field_id == field_id)
+                    || view
+                        .filters
+                        .iter()
+                        .any(|filter| filter.field_id == field_id)
+                    || view.excluded_date_field_ids.contains(&field_id)
+            })
+            .count();
+        let label_use = app.project.diagram_label_field_ids.contains(&field_id);
+        let usage = format!(
+            "Används i: etikett {}, {} vyer, {} objektvärden",
+            if label_use { "ja" } else { "nej" },
+            view_count,
+            object_count
+        );
+
+        fields = fields.push(
+            container(
+                column![
+                    text_input("Fältnamn", &field.name)
+                        .on_input(move |value| Message::RenameField(index, value)),
+                    row![
+                        pick_list(
+                            field_type_options(),
+                            Some(field_type_label(&field.field_type)),
+                            move |value| Message::ChangeFieldType(index, value),
+                        ),
+                        pick_list(
+                            value_mode_options(),
+                            Some(value_mode_label(field.value_mode)),
+                            move |value| Message::ChangeFieldValueMode(index, value),
+                        ),
+                        pick_list(
+                            detail_format_options(),
+                            Some(detail_format_label(field.detail_format)),
+                            move |value| Message::ChangeFieldFormat(index, value),
+                        ),
+                    ]
+                    .spacing(8),
+                    checkbox(field.required)
+                        .label("Obligatoriskt")
+                        .on_toggle(move |value| Message::ChangeFieldRequired(index, value)),
+                    text(usage).size(12),
+                    row![
+                        button("Upp").on_press(Message::MoveFieldUp(index)),
+                        button("Ned").on_press(Message::MoveFieldDown(index)),
+                        button("Ta bort").on_press(Message::RemoveField(index)),
+                    ]
+                    .spacing(8),
+                ]
+                .spacing(8),
+            )
+            .padding(10)
+            .style(container::bordered_box),
+        );
+    }
+
+    let new_field = column![
+        text("Lägg till fält").size(18),
+        text_input("Fältnamn", &app.new_field.name).on_input(Message::NewFieldNameChanged),
+        row![
+            pick_list(
+                field_type_options(),
+                Some(app.new_field.field_type),
+                Message::NewFieldTypeChanged,
+            ),
+            pick_list(
+                value_mode_options(),
+                Some(app.new_field.value_mode),
+                Message::NewFieldValueModeChanged,
+            ),
+            pick_list(
+                detail_format_options(),
+                Some(app.new_field.detail_format),
+                Message::NewFieldFormatChanged,
+            ),
+        ]
+        .spacing(8),
+        checkbox(app.new_field.required)
+            .label("Obligatoriskt")
+            .on_toggle(Message::NewFieldRequiredChanged),
+        button("Skapa fält").on_press(Message::CreateField),
+    ]
+    .spacing(8);
+
+    let status: Element<'_, Message> = app
+        .field_status
+        .as_deref()
+        .map(|status| text(status).into())
+        .unwrap_or_else(|| text("").into());
+
+    fields.push(new_field).push(status).into()
+}
+
+fn create_field(app: &mut App) {
+    let name = app.new_field.name.trim();
+    if name.is_empty()
+        || app
+            .project
+            .fields
+            .iter()
+            .any(|field| field.name.eq_ignore_ascii_case(name))
+    {
+        app.field_status = Some("Fältnamnet måste vara ifyllt och unikt.".to_owned());
+        return;
+    }
+    if app.new_field.required && !app.project.objects.is_empty() {
+        app.field_status =
+            Some("Nya fält kan inte vara obligatoriska när objekt redan finns.".to_owned());
+        return;
+    }
+
+    let field_type = field_type_from_label(app.new_field.field_type);
+    let value_mode = if field_type == FieldType::Image {
+        ValueMode::Single
+    } else {
+        value_mode_from_label(app.new_field.value_mode)
+    };
+    app.project.fields.push(Field {
+        id: FieldId::new(format!("field-{}", app.next_field_number)),
+        project_id: app.project.id.clone(),
+        name: name.to_owned(),
+        field_type,
+        value_mode,
+        required: app.new_field.required,
+        detail_format: detail_format_from_label(app.new_field.detail_format),
+    });
+    app.next_field_number += 1;
+    app.new_field = FieldDraft::default();
+    app.field_status = Some("Fältet skapades.".to_owned());
+}
+
+fn rename_field(app: &mut App, index: usize, value: String) {
+    let duplicate = app
+        .project
+        .fields
+        .iter()
+        .enumerate()
+        .any(|(other, field)| other != index && field.name.eq_ignore_ascii_case(value.trim()));
+    if value.trim().is_empty() || duplicate {
+        app.field_status = Some("Fältnamnet måste vara ifyllt och unikt.".to_owned());
+    } else if let Some(field) = app.project.fields.get_mut(index) {
+        field.name = value;
+        app.field_status = None;
+    }
+}
+
+fn change_field_type(app: &mut App, index: usize, value: &'static str) {
+    let Some(field_id) = app.project.fields.get(index).map(|field| field.id.clone()) else {
+        return;
+    };
+    if let Err(errors) = can_remove_or_change_field(&app.project, &field_id) {
+        app.field_status = Some(field_errors(&errors));
+        return;
+    }
+    if let Some(field) = app.project.fields.get_mut(index) {
+        field.field_type = field_type_from_label(value);
+        if field.field_type == FieldType::Image {
+            field.value_mode = ValueMode::Single;
+            field.detail_format = DetailFormat::Image;
+        }
+    }
+    app.field_status = None;
+}
+
+fn change_field_value_mode(app: &mut App, index: usize, value: &'static str) {
+    let Some(field) = app.project.fields.get(index) else {
+        return;
+    };
+    if field.field_type == FieldType::Image {
+        app.field_status = Some("Bildfält kan endast ha ett värde.".to_owned());
+        return;
+    }
+    let field_id = field.id.clone();
+    if app.project.objects.iter().any(|object| {
+        object
+            .values
+            .get(&field_id)
+            .is_some_and(|values| !values.is_empty())
+    }) {
+        app.field_status = Some("Värdeläge kan bara ändras när fältet är tomt.".to_owned());
+        return;
+    }
+    app.project.fields[index].value_mode = value_mode_from_label(value);
+    app.field_status = None;
+}
+
+fn change_field_required(app: &mut App, index: usize, required: bool) {
+    let Some(field) = app.project.fields.get(index) else {
+        return;
+    };
+    if required
+        && app
+            .project
+            .objects
+            .iter()
+            .any(|object| object.values.get(&field.id).is_none_or(Vec::is_empty))
+    {
+        app.field_status =
+            Some("Alla objekt måste ha ett värde innan fältet blir obligatoriskt.".to_owned());
+        return;
+    }
+    app.project.fields[index].required = required;
+    app.field_status = None;
+}
+
+fn change_field_format(app: &mut App, index: usize, value: &'static str) {
+    if let Some(field) = app.project.fields.get_mut(index) {
+        field.detail_format = detail_format_from_label(value);
+        app.field_status = None;
+    }
+}
+
+fn remove_field(app: &mut App, index: usize) {
+    let Some(field_id) = app.project.fields.get(index).map(|field| field.id.clone()) else {
+        return;
+    };
+    match can_remove_or_change_field(&app.project, &field_id) {
+        Ok(()) => {
+            app.project.fields.remove(index);
+            app.project
+                .list_values
+                .retain(|value| value.field_id != field_id);
+            app.field_status = Some("Fältet togs bort.".to_owned());
+        }
+        Err(errors) => app.field_status = Some(field_errors(&errors)),
+    }
+}
+
+fn field_errors(errors: &[ValidationError]) -> String {
+    errors
+        .iter()
+        .map(|error| match error {
+            ValidationError::FieldHasValues { object_count, .. } => {
+                format!("Fältet har värde på {object_count} objekt")
+            }
+            ValidationError::FieldIsUsed {
+                view_count,
+                in_label,
+                ..
+            } => format!(
+                "Fältet används i {}{}",
+                if *in_label { "global etikett" } else { "" },
+                if *view_count > 0 {
+                    format!("{}{view_count} vyer", if *in_label { " och " } else { "" })
+                } else {
+                    String::new()
+                }
+            ),
+            _ => "Fältåtgärden är spärrad.".to_owned(),
+        })
+        .collect::<Vec<_>>()
+        .join(". ")
+}
+
+fn field_type_options() -> [&'static str; 5] {
+    ["Text", "Tal", "Datum", "Lista", "Bild"]
+}
+
+fn field_type_label(field_type: &FieldType) -> &'static str {
+    match field_type {
+        FieldType::Text => "Text",
+        FieldType::Number(_) => "Tal",
+        FieldType::Date => "Datum",
+        FieldType::List => "Lista",
+        FieldType::Image => "Bild",
+    }
+}
+
+fn field_type_from_label(label: &str) -> FieldType {
+    match label {
+        "Tal" => FieldType::Number(gridcellar::model::NumberKind::Decimal),
+        "Datum" => FieldType::Date,
+        "Lista" => FieldType::List,
+        "Bild" => FieldType::Image,
+        _ => FieldType::Text,
+    }
+}
+
+fn value_mode_options() -> [&'static str; 2] {
+    ["Ett värde", "Flera värden"]
+}
+
+fn value_mode_label(value_mode: ValueMode) -> &'static str {
+    match value_mode {
+        ValueMode::Single => "Ett värde",
+        ValueMode::Multiple => "Flera värden",
+    }
+}
+
+fn value_mode_from_label(label: &str) -> ValueMode {
+    if label == "Flera värden" {
+        ValueMode::Multiple
+    } else {
+        ValueMode::Single
+    }
+}
+
+fn detail_format_options() -> [&'static str; 7] {
+    [
+        "Normal rad",
+        "Rubrikrad",
+        "Chip",
+        "Längre text",
+        "Bild",
+        "Datum",
+        "Tal",
+    ]
+}
+
+fn detail_format_label(format: DetailFormat) -> &'static str {
+    match format {
+        DetailFormat::NormalRow => "Normal rad",
+        DetailFormat::Title => "Rubrikrad",
+        DetailFormat::Chips => "Chip",
+        DetailFormat::LongText => "Längre text",
+        DetailFormat::Image => "Bild",
+        DetailFormat::Date => "Datum",
+        DetailFormat::Number => "Tal",
+    }
+}
+
+fn detail_format_from_label(label: &str) -> DetailFormat {
+    match label {
+        "Rubrikrad" => DetailFormat::Title,
+        "Chip" => DetailFormat::Chips,
+        "Längre text" => DetailFormat::LongText,
+        "Bild" => DetailFormat::Image,
+        "Datum" => DetailFormat::Date,
+        "Tal" => DetailFormat::Number,
+        _ => DetailFormat::NormalRow,
+    }
 }
 
 fn time_range_label(time_range: &TimeRange) -> &'static str {

@@ -21,7 +21,8 @@
 - Arbetspaket 4.2, paneler och dialogflöden, är verifierat.
 - Fas 5, projekt- och fältkonfiguration, pågår.
 - Arbetspaket 5.1, projektinställningar, är verifierat.
-- Arbetspaket 5.2, fältadministration, är nästa arbetspaket.
+- Arbetspaket 5.2, fältadministration, är verifierat.
+- Arbetspaket 5.3, listvärdesadministration, är nästa arbetspaket.
 
 ## Blockeringar
 
