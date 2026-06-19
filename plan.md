@@ -704,7 +704,7 @@ Steg:
 
 ### Arbetspaket 7.3: Filter
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -717,14 +717,14 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera filterlista.
-- [ ] Implementera textoperatorerna `innehåller` och `är exakt`.
-- [ ] Implementera taloperatorer enligt blueprinten.
-- [ ] Implementera datumoperatorer enligt blueprinten.
-- [ ] Implementera listfilter med flera val.
-- [ ] Implementera `är tomt`.
-- [ ] Implementera `inkludera tomma värden`.
-- [ ] Implementera ogiltighetsmarkering.
+- [x] Implementera filterlista.
+- [x] Implementera textoperatorerna `innehåller` och `är exakt`.
+- [x] Implementera taloperatorer enligt blueprinten.
+- [x] Implementera datumoperatorer enligt blueprinten.
+- [x] Implementera listfilter med flera val.
+- [x] Implementera `är tomt`.
+- [x] Implementera `inkludera tomma värden`.
+- [x] Implementera ogiltighetsmarkering.
 
 ### Arbetspaket 7.4: Fritextsökning
 

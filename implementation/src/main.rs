@@ -21,6 +21,7 @@ struct App {
     view_dirty: bool,
     view_name_draft: String,
     next_view_number: usize,
+    filter_draft: FilterDraft,
     panel: Option<Panel>,
     project_settings: ProjectSettingsDraft,
     new_field: FieldDraft,
@@ -49,6 +50,7 @@ impl Default for App {
             view_draft,
             view_dirty: false,
             next_view_number: 2,
+            filter_draft: FilterDraft::default(),
             project,
             search: String::new(),
             panel: None,
@@ -74,6 +76,25 @@ struct FieldDraft {
     value_mode: &'static str,
     required: bool,
     detail_format: &'static str,
+}
+
+#[derive(Clone, Debug)]
+struct FilterDraft {
+    field_name: Option<String>,
+    operator: &'static str,
+    operands: String,
+    include_empty: bool,
+}
+
+impl Default for FilterDraft {
+    fn default() -> Self {
+        Self {
+            field_name: None,
+            operator: "Är tomt",
+            operands: String::new(),
+            include_empty: false,
+        }
+    }
 }
 
 impl Default for FieldDraft {
@@ -133,6 +154,12 @@ enum Message {
     GroupingSelected(usize, String),
     ToggleGroupingDirection(usize),
     ToggleDateField(FieldId, bool),
+    FilterFieldSelected(String),
+    FilterOperatorSelected(&'static str),
+    FilterOperandsChanged(String),
+    FilterIncludeEmptyChanged(bool),
+    AddFilter,
+    RemoveFilter(usize),
     RangeSelected(&'static str),
     ProjectNameChanged(String),
     RowHeightChanged(String),
@@ -212,6 +239,17 @@ fn update(app: &mut App, message: Message) {
                 app.view_draft.excluded_date_field_ids.push(field_id);
             }
             app.view_dirty = true;
+        }
+        Message::FilterFieldSelected(value) => app.filter_draft.field_name = Some(value),
+        Message::FilterOperatorSelected(value) => app.filter_draft.operator = value,
+        Message::FilterOperandsChanged(value) => app.filter_draft.operands = value,
+        Message::FilterIncludeEmptyChanged(value) => app.filter_draft.include_empty = value,
+        Message::AddFilter => add_filter(app),
+        Message::RemoveFilter(index) => {
+            if index < app.view_draft.filters.len() {
+                app.view_draft.filters.remove(index);
+                app.view_dirty = true;
+            }
         }
         Message::RangeSelected(value) => {
             app.project.diagram_settings.time_range = time_range_from_label(value);
@@ -466,10 +504,7 @@ fn panel_overlay(app: &App, panel: Panel, size: Size) -> Element<'_, Message> {
     let (title, content): (&str, Element<'_, Message>) = match panel {
         Panel::Detail => ("Objekt", detail_view(app)),
         Panel::Configuration => ("Konfiguration", configuration_panel(app)),
-        Panel::Filters => (
-            "Filter",
-            text("Här visas och redigeras den aktiva vyns filter.").into(),
-        ),
+        Panel::Filters => ("Filter", filters_panel(app)),
         Panel::DateFields => ("Datumfält", date_fields_panel(app)),
     };
 
@@ -594,6 +629,88 @@ fn date_fields_panel(app: &App) -> Element<'_, Message> {
         content = content.push(text("Projektet saknar datumfält."));
     }
     content.into()
+}
+
+fn filters_panel(app: &App) -> Element<'_, Message> {
+    let mut content = column![].spacing(10);
+    for (index, filter) in app.view_draft.filters.iter().enumerate() {
+        let field_name = app
+            .project
+            .fields
+            .iter()
+            .find(|field| field.id == filter.field_id)
+            .map(|field| field.name.as_str())
+            .unwrap_or("Saknat fält");
+        content = content.push(
+            row![
+                text(format!(
+                    "{} · {:?} · {} operand(er){}",
+                    field_name,
+                    filter.operator,
+                    filter.operands.len(),
+                    if filter.include_empty {
+                        " · inkluderar tomma"
+                    } else {
+                        ""
+                    }
+                ))
+                .width(Fill),
+                button("Ta bort").on_press(Message::RemoveFilter(index)),
+            ]
+            .spacing(8),
+        );
+    }
+
+    let field_options: Vec<String> = app
+        .project
+        .fields
+        .iter()
+        .filter(|field| field.field_type != FieldType::Image)
+        .map(|field| field.name.clone())
+        .collect();
+    content
+        .push(rule::horizontal(1))
+        .push(pick_list(
+            field_options,
+            app.filter_draft.field_name.clone(),
+            Message::FilterFieldSelected,
+        ).placeholder("Fält"))
+        .push(pick_list(
+            filter_operator_options(),
+            Some(app.filter_draft.operator),
+            Message::FilterOperatorSelected,
+        ))
+        .push(
+            text_input(
+                "Värde; använd semikolon för intervall eller flera listvärden",
+                &app.filter_draft.operands,
+            )
+            .on_input(Message::FilterOperandsChanged),
+        )
+        .push(
+            checkbox(app.filter_draft.include_empty)
+                .label("Inkludera tomma värden")
+                .on_toggle(Message::FilterIncludeEmptyChanged),
+        )
+        .push(button("Lägg till filter").on_press(Message::AddFilter))
+        .push(text(app.field_status.as_deref().unwrap_or("")))
+        .into()
+}
+
+fn filter_operator_options() -> [&'static str; 11] {
+    [
+        "Innehåller",
+        "Är exakt",
+        "Lika med",
+        "Större än",
+        "Mindre än",
+        "Intervall",
+        "Före",
+        "Efter",
+        "Mellan",
+        "Är någon av",
+        "Är tomt",
+    ]
 }
 
 fn configuration_panel(app: &App) -> Element<'_, Message> {
@@ -1759,6 +1876,92 @@ fn toggle_grouping_direction(app: &mut App, index: usize) {
             }
         };
         app.view_dirty = true;
+    }
+}
+
+fn add_filter(app: &mut App) {
+    let Some(field_name) = app.filter_draft.field_name.as_deref() else {
+        return;
+    };
+    let Some(field) = app
+        .project
+        .fields
+        .iter()
+        .find(|field| field.name == field_name && field.field_type != FieldType::Image)
+    else {
+        return;
+    };
+    let operator = match app.filter_draft.operator {
+        "Innehåller" => gridcellar::model::FilterOperator::Contains,
+        "Är exakt" | "Lika med" => gridcellar::model::FilterOperator::Equals,
+        "Större än" => gridcellar::model::FilterOperator::GreaterThan,
+        "Mindre än" => gridcellar::model::FilterOperator::LessThan,
+        "Intervall" => gridcellar::model::FilterOperator::Range,
+        "Före" => gridcellar::model::FilterOperator::Before,
+        "Efter" => gridcellar::model::FilterOperator::After,
+        "Mellan" => gridcellar::model::FilterOperator::Between,
+        "Är någon av" => gridcellar::model::FilterOperator::IsAnyOf,
+        _ => gridcellar::model::FilterOperator::IsEmpty,
+    };
+    let operands = if operator == gridcellar::model::FilterOperator::IsEmpty {
+        Vec::new()
+    } else {
+        app.filter_draft
+            .operands
+            .split(';')
+            .filter_map(|value| filter_operand(app, field, value.trim()))
+            .collect()
+    };
+    let filter = gridcellar::model::Filter {
+        field_id: field.id.clone(),
+        operator,
+        operands,
+        include_empty: app.filter_draft.include_empty,
+    };
+    let mut candidate = app.view_draft.clone();
+    candidate.filters.push(filter.clone());
+    let mut project = app.project.clone();
+    if let Some(view) = project
+        .views
+        .iter_mut()
+        .find(|view| view.id == app.active_view_id)
+    {
+        *view = candidate;
+    }
+    if gridcellar::validation::validate_project(&project)
+        .iter()
+        .any(|error| matches!(error, ValidationError::InvalidFilter(_)))
+    {
+        app.field_status = Some("Filtret är ogiltigt för valt fält eller operator.".to_owned());
+        return;
+    }
+    app.view_draft.filters.push(filter);
+    app.view_dirty = true;
+    app.filter_draft = FilterDraft::default();
+}
+
+fn filter_operand(
+    app: &App,
+    field: &Field,
+    value: &str,
+) -> Option<gridcellar::model::FilterOperand> {
+    use gridcellar::model::{FilterOperand, NumberKind};
+    match &field.field_type {
+        FieldType::Text => Some(FilterOperand::Text(value.to_owned())),
+        FieldType::Number(NumberKind::Integer) => value.parse().ok().map(FilterOperand::Integer),
+        FieldType::Number(NumberKind::Decimal) => value
+            .replace(',', ".")
+            .parse()
+            .ok()
+            .map(FilterOperand::Decimal),
+        FieldType::Date => Some(FilterOperand::Date(gridcellar::model::CalendarDate::new(value))),
+        FieldType::List => app
+            .project
+            .list_values
+            .iter()
+            .find(|item| item.field_id == field.id && item.name.eq_ignore_ascii_case(value))
+            .map(|item| FilterOperand::ListValue(item.id.clone())),
+        FieldType::Image => None,
     }
 }
 
