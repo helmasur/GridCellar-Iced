@@ -749,7 +749,7 @@ Steg:
 
 ## Fas 8: Huvuddiagram
 
-Status: Ej påbörjad
+Status: Pågår
 
 Syfte:
 
@@ -763,7 +763,7 @@ Bygger på:
 
 ### Arbetspaket 8.1: Diagramradmodell
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -776,12 +776,12 @@ Verifiering:
 
 Steg:
 
-- [ ] Beräkna objektetiketter.
-- [ ] Beräkna grupprader.
-- [ ] Beräkna objektrader.
-- [ ] Beräkna datumlinjer.
-- [ ] Beräkna datumpunkter.
-- [ ] Beräkna objekt utan visade datum.
+- [x] Beräkna objektetiketter.
+- [x] Beräkna grupprader.
+- [x] Beräkna objektrader.
+- [x] Beräkna datumlinjer.
+- [x] Beräkna datumpunkter.
+- [x] Beräkna objekt utan visade datum.
 
 ### Arbetspaket 8.2: Diagramlayout
 

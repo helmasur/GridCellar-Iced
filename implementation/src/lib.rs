@@ -1,3 +1,4 @@
+pub mod chart;
 pub mod editor;
 pub mod label;
 pub mod model;
