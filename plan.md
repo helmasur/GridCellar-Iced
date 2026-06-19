@@ -455,7 +455,7 @@ Steg:
 
 ## Fas 5: Projekt- och fältkonfiguration
 
-Status: Ej påbörjad
+Status: Pågår
 
 Syfte:
 
@@ -468,7 +468,7 @@ Bygger på:
 
 ### Arbetspaket 5.1: Projektinställningar
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -482,10 +482,10 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera projektnamn.
-- [ ] Implementera radhöjd.
-- [ ] Implementera namnkolumnbredd.
-- [ ] Implementera globalt tidsintervall.
+- [x] Implementera projektnamn.
+- [x] Implementera radhöjd.
+- [x] Implementera namnkolumnbredd.
+- [x] Implementera globalt tidsintervall.
 
 ### Arbetspaket 5.2: Fältadministration
 
