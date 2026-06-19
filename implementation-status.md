@@ -11,7 +11,9 @@
 - Arbetspaket 2.1, projektgrund, är verifierat.
 - Arbetspaket 2.2, arbetsdisciplin, är klart.
 - En minimal Iced-implementation har skapats.
-- Fas 3, kärnmodell, regler och lokal data, är nästa fas.
+- Fas 3, kärnmodell, regler och lokal data, pågår.
+- Arbetspaket 3.1, datamodell, är verifierat.
+- Arbetspaket 3.2, validering och spärrregler, är nästa arbetspaket.
 
 ## Blockeringar
 

@@ -272,7 +272,7 @@ Steg:
 
 ## Fas 3: Kärnmodell, regler och lokal data
 
-Status: Ej påbörjad
+Status: Pågår
 
 Syfte:
 
@@ -285,7 +285,7 @@ Bygger på:
 
 ### Arbetspaket 3.1: Datamodell
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -299,12 +299,12 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera projektenhet.
-- [ ] Implementera fältenhet.
-- [ ] Implementera listvärden.
-- [ ] Implementera objektenhet och fältvärden.
-- [ ] Implementera vyenhet.
-- [ ] Kontrollera mot modellkontraktet.
+- [x] Implementera projektenhet.
+- [x] Implementera fältenhet.
+- [x] Implementera listvärden.
+- [x] Implementera objektenhet och fältvärden.
+- [x] Implementera vyenhet.
+- [x] Kontrollera mot modellkontraktet.
 
 ### Arbetspaket 3.2: Validering och spärrregler
 
