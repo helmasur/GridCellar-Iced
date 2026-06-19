@@ -594,7 +594,7 @@ Steg:
 
 ### Arbetspaket 6.2: Skapande och redigering
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -609,17 +609,17 @@ Verifiering:
 
 Steg:
 
-- [ ] Öppna skapandeläge från `Lägg till objekt`.
-- [ ] Öppna redigeringsläge från detaljpanelen.
-- [ ] Implementera textinmatning.
-- [ ] Implementera talinmatning.
-- [ ] Implementera datuminmatning.
-- [ ] Implementera listval.
-- [ ] Implementera bildval.
-- [ ] Implementera flervärden med ordning.
-- [ ] Implementera `Spara`.
-- [ ] Implementera `Återställ`.
-- [ ] Implementera varning vid osparade ändringar.
+- [x] Öppna skapandeläge från `Lägg till objekt`.
+- [x] Öppna redigeringsläge från detaljpanelen.
+- [x] Implementera textinmatning.
+- [x] Implementera talinmatning.
+- [x] Implementera datuminmatning.
+- [x] Implementera listval.
+- [x] Implementera bildval.
+- [x] Implementera flervärden med ordning.
+- [x] Implementera `Spara`.
+- [x] Implementera `Återställ`.
+- [x] Implementera varning vid osparade ändringar.
 
 ### Arbetspaket 6.3: Duplicera och ta bort
 

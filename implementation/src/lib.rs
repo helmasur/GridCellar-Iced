@@ -1,3 +1,4 @@
+pub mod editor;
 pub mod label;
 pub mod model;
 pub mod persistence;

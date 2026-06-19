@@ -1,3 +1,4 @@
+use gridcellar::editor::{DraftValue, ObjectDraft};
 use gridcellar::label::diagram_label;
 use gridcellar::model::{
     DetailFormat, Field, FieldId, FieldType, FieldValue, ListValue, ListValueId, ObjectId, Project,
@@ -24,6 +25,10 @@ struct App {
     new_list_value_names: std::collections::BTreeMap<FieldId, String>,
     next_list_value_number: usize,
     selected_object_id: Option<ObjectId>,
+    object_draft: Option<ObjectDraft>,
+    saved_object_draft: Option<ObjectDraft>,
+    object_status: Option<String>,
+    next_object_number: usize,
 }
 
 impl Default for App {
@@ -45,6 +50,10 @@ impl Default for App {
             new_list_value_names: std::collections::BTreeMap::new(),
             next_list_value_number: 1,
             selected_object_id: None,
+            object_draft: None,
+            saved_object_draft: None,
+            object_status: None,
+            next_object_number: 1,
         }
     }
 }
@@ -136,6 +145,17 @@ enum Message {
     MoveLabelFieldUp(usize),
     MoveLabelFieldDown(usize),
     RemoveLabelField(usize),
+    StartEditingObject,
+    DraftValueChanged(FieldId, usize, String),
+    AddDraftValue(FieldId),
+    RemoveDraftValue(FieldId, usize),
+    MoveDraftValueUp(FieldId, usize),
+    MoveDraftValueDown(FieldId, usize),
+    SelectListValue(FieldId, usize, String),
+    ChooseImage(FieldId),
+    RemoveImage(FieldId),
+    SaveObject,
+    ResetObject,
     AddObject,
     OpenConfiguration,
     OpenFilters,
@@ -225,11 +245,40 @@ fn update(app: &mut App, message: Message) {
             }
         }
         Message::RemoveLabelField(index) => remove_label_field(app, index),
-        Message::AddObject => app.panel = Some(Panel::Detail),
+        Message::AddObject => start_creating_object(app),
         Message::OpenConfiguration => app.panel = Some(Panel::Configuration),
         Message::OpenFilters => app.panel = Some(Panel::Filters),
         Message::OpenDateFields => app.panel = Some(Panel::DateFields),
-        Message::ClosePanel => app.panel = None,
+        Message::ClosePanel => close_panel(app),
+        Message::StartEditingObject => start_editing_object(app),
+        Message::DraftValueChanged(field_id, index, value) => {
+            set_draft_text(app, &field_id, index, value)
+        }
+        Message::AddDraftValue(field_id) => add_draft_value(app, &field_id),
+        Message::RemoveDraftValue(field_id, index) => remove_draft_value(app, &field_id, index),
+        Message::MoveDraftValueUp(field_id, index) => move_draft_value(app, &field_id, index, true),
+        Message::MoveDraftValueDown(field_id, index) => {
+            move_draft_value(app, &field_id, index, false)
+        }
+        Message::SelectListValue(field_id, index, value) => {
+            if let Some(id) = app
+                .project
+                .list_values
+                .iter()
+                .find(|item| item.field_id == field_id && item.name == value)
+                .map(|item| item.id.as_str().to_owned())
+            {
+                set_draft_text(app, &field_id, index, id);
+            }
+        }
+        Message::ChooseImage(field_id) => choose_image(app, &field_id),
+        Message::RemoveImage(field_id) => {
+            if let Some(draft) = &mut app.object_draft {
+                draft.values.insert(field_id, Vec::new());
+            }
+        }
+        Message::SaveObject => save_object(app),
+        Message::ResetObject => reset_object(app),
     }
 }
 
@@ -432,6 +481,10 @@ fn configuration_panel(app: &App) -> Element<'_, Message> {
 }
 
 fn detail_view(app: &App) -> Element<'_, Message> {
+    if let Some(draft) = &app.object_draft {
+        return object_editor(app, draft);
+    }
+
     let object = app
         .selected_object_id
         .as_ref()
@@ -447,8 +500,11 @@ fn detail_view(app: &App) -> Element<'_, Message> {
         .into();
     };
 
-    let mut fields =
-        column![text(format!("Internt id: {}", object.id.as_str())).size(12)].spacing(12);
+    let mut fields = column![
+        text(format!("Internt id: {}", object.id.as_str())).size(12),
+        button("Redigera").on_press(Message::StartEditingObject),
+    ]
+    .spacing(12);
     for field in &app.project.fields {
         let values = object
             .values
@@ -459,6 +515,119 @@ fn detail_view(app: &App) -> Element<'_, Message> {
     }
 
     scrollable(fields).into()
+}
+
+fn object_editor<'a>(app: &'a App, draft: &'a ObjectDraft) -> Element<'a, Message> {
+    let mut form = column![].spacing(12);
+    for field in &app.project.fields {
+        form = form.push(object_field_editor(app, draft, field));
+    }
+    form = form
+        .push(text(app.object_status.as_deref().unwrap_or("")))
+        .push(
+            row![
+                button("Spara").on_press(Message::SaveObject),
+                button("Återställ").on_press(Message::ResetObject),
+            ]
+            .spacing(8),
+        );
+    scrollable(form).into()
+}
+
+fn object_field_editor<'a>(
+    app: &'a App,
+    draft: &'a ObjectDraft,
+    field: &'a Field,
+) -> Element<'a, Message> {
+    let values = draft
+        .values
+        .get(&field.id)
+        .map(Vec::as_slice)
+        .unwrap_or_default();
+    let mut content = column![text(format!(
+        "{}{}",
+        field.name,
+        if field.required { " *" } else { "" }
+    ))]
+    .spacing(6);
+
+    if field.field_type == FieldType::Image {
+        let has_image = values
+            .iter()
+            .any(|value| matches!(value, DraftValue::Image(bytes) if !bytes.is_empty()));
+        return content
+            .push(text(if has_image { "Bild vald" } else { "—" }))
+            .push(
+                row![
+                    button("Välj bild").on_press(Message::ChooseImage(field.id.clone())),
+                    button("Ta bort").on_press(Message::RemoveImage(field.id.clone())),
+                ]
+                .spacing(8),
+            )
+            .into();
+    }
+
+    let visible_values = values.len().max(1);
+    for index in 0..visible_values {
+        let value = values
+            .get(index)
+            .and_then(|value| match value {
+                DraftValue::Text(value) => Some(value.as_str()),
+                DraftValue::Image(_) => None,
+            })
+            .unwrap_or("");
+        let field_id = field.id.clone();
+        let input: Element<'_, Message> = if field.field_type == FieldType::List {
+            let options: Vec<String> = app
+                .project
+                .list_values
+                .iter()
+                .filter(|item| item.field_id == field.id)
+                .map(|item| item.name.clone())
+                .collect();
+            let selected = app
+                .project
+                .list_values
+                .iter()
+                .find(|item| item.id.as_str() == value)
+                .map(|item| item.name.clone());
+            pick_list(options, selected, move |selected| {
+                Message::SelectListValue(field_id.clone(), index, selected)
+            })
+            .placeholder("Välj listvärde")
+            .into()
+        } else {
+            text_input(input_placeholder(&field.field_type), value)
+                .on_input(move |value| Message::DraftValueChanged(field_id.clone(), index, value))
+                .into()
+        };
+
+        content = content.push(
+            row![
+                input,
+                button("Upp").on_press(Message::MoveDraftValueUp(field.id.clone(), index)),
+                button("Ned").on_press(Message::MoveDraftValueDown(field.id.clone(), index)),
+                button("Ta bort").on_press(Message::RemoveDraftValue(field.id.clone(), index)),
+            ]
+            .spacing(6),
+        );
+    }
+
+    if field.value_mode == ValueMode::Multiple {
+        content = content
+            .push(button("Lägg till värde").on_press(Message::AddDraftValue(field.id.clone())));
+    }
+    content.into()
+}
+
+fn input_placeholder(field_type: &FieldType) -> &'static str {
+    match field_type {
+        FieldType::Text => "Text",
+        FieldType::Number(_) => "Tal",
+        FieldType::Date => "YYYY-MM-DD",
+        FieldType::List => "Listvärde",
+        FieldType::Image => "",
+    }
 }
 
 fn detail_field<'a>(
@@ -1148,6 +1317,155 @@ fn preview_diagram_label(app: &App) -> String {
         .first()
         .map(|object| diagram_label(&app.project, object))
         .unwrap_or_else(|| "Objektnamn".to_owned())
+}
+
+fn start_creating_object(app: &mut App) {
+    if app.project.fields.is_empty() {
+        app.panel = Some(Panel::Configuration);
+        app.field_status = Some("Skapa minst ett fält innan du lägger till objekt.".to_owned());
+        return;
+    }
+    let draft = ObjectDraft::empty(&app.project);
+    app.saved_object_draft = Some(draft.clone());
+    app.object_draft = Some(draft);
+    app.selected_object_id = None;
+    app.object_status = None;
+    app.panel = Some(Panel::Detail);
+}
+
+fn start_editing_object(app: &mut App) {
+    let object = app
+        .selected_object_id
+        .as_ref()
+        .and_then(|id| app.project.objects.iter().find(|object| object.id == *id))
+        .or_else(|| app.project.objects.first());
+    if let Some(object) = object {
+        let draft = ObjectDraft::from_object(&app.project, object);
+        app.saved_object_draft = Some(draft.clone());
+        app.object_draft = Some(draft);
+        app.selected_object_id = Some(object.id.clone());
+    }
+}
+
+fn close_panel(app: &mut App) {
+    if app.object_draft != app.saved_object_draft {
+        app.object_status =
+            Some("Osparade ändringar finns. Välj Återställ innan panelen stängs.".to_owned());
+        return;
+    }
+    app.panel = None;
+    app.object_draft = None;
+    app.saved_object_draft = None;
+}
+
+fn set_draft_text(app: &mut App, field_id: &FieldId, index: usize, value: String) {
+    let Some(draft) = &mut app.object_draft else {
+        return;
+    };
+    let values = draft.values.entry(field_id.clone()).or_default();
+    while values.len() <= index {
+        values.push(DraftValue::Text(String::new()));
+    }
+    values[index] = DraftValue::Text(value);
+}
+
+fn add_draft_value(app: &mut App, field_id: &FieldId) {
+    if let Some(draft) = &mut app.object_draft {
+        draft
+            .values
+            .entry(field_id.clone())
+            .or_default()
+            .push(DraftValue::Text(String::new()));
+    }
+}
+
+fn remove_draft_value(app: &mut App, field_id: &FieldId, index: usize) {
+    if let Some(values) = app
+        .object_draft
+        .as_mut()
+        .and_then(|draft| draft.values.get_mut(field_id))
+    {
+        if index < values.len() {
+            values.remove(index);
+        }
+    }
+}
+
+fn move_draft_value(app: &mut App, field_id: &FieldId, index: usize, upward: bool) {
+    let Some(values) = app
+        .object_draft
+        .as_mut()
+        .and_then(|draft| draft.values.get_mut(field_id))
+    else {
+        return;
+    };
+    let target = if upward {
+        index.checked_sub(1)
+    } else if index + 1 < values.len() {
+        Some(index + 1)
+    } else {
+        None
+    };
+    if let Some(target) = target {
+        values.swap(index, target);
+    }
+}
+
+fn choose_image(app: &mut App, field_id: &FieldId) {
+    let Some(path) = rfd::FileDialog::new()
+        .add_filter("Images", &["png", "jpg", "jpeg", "webp"])
+        .pick_file()
+    else {
+        return;
+    };
+    match std::fs::read(path) {
+        Ok(bytes) => {
+            if let Some(draft) = &mut app.object_draft {
+                draft
+                    .values
+                    .insert(field_id.clone(), vec![DraftValue::Image(bytes)]);
+            }
+            app.object_status = None;
+        }
+        Err(_) => app.object_status = Some("Bilden kunde inte läsas.".to_owned()),
+    }
+}
+
+fn save_object(app: &mut App) {
+    let Some(draft) = app.object_draft.clone() else {
+        return;
+    };
+    let object_id = draft
+        .object_id
+        .clone()
+        .unwrap_or_else(|| ObjectId::new(format!("object-{}", app.next_object_number)));
+    match draft.to_object(&app.project, object_id.clone()) {
+        Ok(object) => {
+            if let Some(existing) = app
+                .project
+                .objects
+                .iter_mut()
+                .find(|existing| existing.id == object_id)
+            {
+                *existing = object;
+            } else {
+                app.project.objects.push(object);
+                app.next_object_number += 1;
+            }
+            app.selected_object_id = Some(object_id);
+            app.object_draft = None;
+            app.saved_object_draft = None;
+            app.object_status = None;
+        }
+        Err(errors) => {
+            app.object_status = Some(format!("Objektet kan inte sparas: {} fel.", errors.len()));
+        }
+    }
+}
+
+fn reset_object(app: &mut App) {
+    app.object_draft = app.saved_object_draft.clone();
+    app.object_status = None;
 }
 
 fn field_errors(errors: &[ValidationError]) -> String {

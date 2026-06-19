@@ -26,7 +26,8 @@
 - Arbetspaket 5.4, global diagrametikett, är verifierat.
 - Fas 6, objekt och detaljpanel, pågår.
 - Arbetspaket 6.1, visningsläge, är verifierat.
-- Arbetspaket 6.2, skapande och redigering, är nästa arbetspaket.
+- Arbetspaket 6.2, skapande och redigering, är verifierat.
+- Arbetspaket 6.3, duplicera och ta bort, är nästa arbetspaket.
 
 ## Blockeringar
 
