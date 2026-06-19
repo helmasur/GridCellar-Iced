@@ -130,6 +130,9 @@ enum Message {
     DuplicateView,
     ResetView,
     DeleteView,
+    GroupingSelected(usize, String),
+    ToggleGroupingDirection(usize),
+    ToggleDateField(FieldId, bool),
     RangeSelected(&'static str),
     ProjectNameChanged(String),
     RowHeightChanged(String),
@@ -200,6 +203,16 @@ fn update(app: &mut App, message: Message) {
         Message::DuplicateView => duplicate_view(app),
         Message::ResetView => reset_view(app),
         Message::DeleteView => delete_view(app),
+        Message::GroupingSelected(index, value) => set_grouping(app, index, &value),
+        Message::ToggleGroupingDirection(index) => toggle_grouping_direction(app, index),
+        Message::ToggleDateField(field_id, included) => {
+            if included {
+                app.view_draft.excluded_date_field_ids.retain(|id| id != &field_id);
+            } else if !app.view_draft.excluded_date_field_ids.contains(&field_id) {
+                app.view_draft.excluded_date_field_ids.push(field_id);
+            }
+            app.view_dirty = true;
+        }
         Message::RangeSelected(value) => {
             app.project.diagram_settings.time_range = time_range_from_label(value);
             app.project_settings.time_range = value;
@@ -383,9 +396,9 @@ fn page<'a>(
         button("Återställ vy").on_press(Message::ResetView),
         button("Ta bort vy").on_press(Message::DeleteView),
         button("Filter (0)").on_press(Message::OpenFilters),
-        button("Nivå 1"),
-        button("Nivå 2"),
-        button("Nivå 3"),
+        grouping_picker(app, 0),
+        grouping_picker(app, 1),
+        grouping_picker(app, 2),
         button("Datumfält (0/0)").on_press(Message::OpenDateFields),
         button("Passa in alla datum"),
     ]
@@ -457,10 +470,7 @@ fn panel_overlay(app: &App, panel: Panel, size: Size) -> Element<'_, Message> {
             "Filter",
             text("Här visas och redigeras den aktiva vyns filter.").into(),
         ),
-        Panel::DateFields => (
-            "Datumfält",
-            text("Här väljs vilka datumfält som visas i den aktiva vyn.").into(),
-        ),
+        Panel::DateFields => ("Datumfält", date_fields_panel(app)),
     };
 
     let panel = container(
@@ -517,6 +527,73 @@ fn range_picker(app: &App) -> Element<'_, Message> {
     )
     .placeholder("Tidsintervall")
     .into()
+}
+
+fn grouping_picker(app: &App, index: usize) -> Element<'_, Message> {
+    let mut options = vec!["Ingen".to_owned()];
+    options.extend(
+        app.project
+            .fields
+            .iter()
+            .filter(|field| field.field_type != FieldType::Image)
+            .map(|field| field.name.clone()),
+    );
+    let selected = app
+        .view_draft
+        .grouping
+        .get(index)
+        .and_then(|group| {
+            app.project
+                .fields
+                .iter()
+                .find(|field| field.id == group.field_id)
+                .map(|field| field.name.clone())
+        })
+        .unwrap_or_else(|| "Ingen".to_owned());
+    let direction = app
+        .view_draft
+        .grouping
+        .get(index)
+        .map(|group| match group.direction {
+            gridcellar::model::SortDirection::Ascending => "↑",
+            gridcellar::model::SortDirection::Descending => "↓",
+        })
+        .unwrap_or("↑");
+    row![
+        pick_list(options, Some(selected), move |value| {
+            Message::GroupingSelected(index, value)
+        }),
+        button(direction).on_press(Message::ToggleGroupingDirection(index)),
+    ]
+    .spacing(4)
+    .into()
+}
+
+fn date_fields_panel(app: &App) -> Element<'_, Message> {
+    let mut content = column![].spacing(8);
+    for field in app
+        .project
+        .fields
+        .iter()
+        .filter(|field| field.field_type == FieldType::Date)
+    {
+        let included = !app.view_draft.excluded_date_field_ids.contains(&field.id);
+        let field_id = field.id.clone();
+        content = content.push(
+            checkbox(included)
+                .label(&field.name)
+                .on_toggle(move |value| Message::ToggleDateField(field_id.clone(), value)),
+        );
+    }
+    if !app
+        .project
+        .fields
+        .iter()
+        .any(|field| field.field_type == FieldType::Date)
+    {
+        content = content.push(text("Projektet saknar datumfält."));
+    }
+    content.into()
 }
 
 fn configuration_panel(app: &App) -> Element<'_, Message> {
@@ -1641,6 +1718,47 @@ fn unique_view_name(app: &App, base: &str) -> String {
             return candidate;
         }
         number += 1;
+    }
+}
+
+fn set_grouping(app: &mut App, index: usize, field_name: &str) {
+    if field_name == "Ingen" {
+        app.view_draft.grouping.truncate(index);
+        app.view_dirty = true;
+        return;
+    }
+    let Some(field_id) = app
+        .project
+        .fields
+        .iter()
+        .find(|field| field.name == field_name && field.field_type != FieldType::Image)
+        .map(|field| field.id.clone())
+    else {
+        return;
+    };
+    let grouping = gridcellar::model::Grouping {
+        field_id,
+        direction: gridcellar::model::SortDirection::Ascending,
+    };
+    if index < app.view_draft.grouping.len() {
+        app.view_draft.grouping[index] = grouping;
+    } else if index == app.view_draft.grouping.len() && index < 3 {
+        app.view_draft.grouping.push(grouping);
+    }
+    app.view_dirty = true;
+}
+
+fn toggle_grouping_direction(app: &mut App, index: usize) {
+    if let Some(grouping) = app.view_draft.grouping.get_mut(index) {
+        grouping.direction = match grouping.direction {
+            gridcellar::model::SortDirection::Ascending => {
+                gridcellar::model::SortDirection::Descending
+            }
+            gridcellar::model::SortDirection::Descending => {
+                gridcellar::model::SortDirection::Ascending
+            }
+        };
+        app.view_dirty = true;
     }
 }
 

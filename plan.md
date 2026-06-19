@@ -682,7 +682,7 @@ Steg:
 
 ### Arbetspaket 7.2: Gruppering och datumfältsval
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -695,12 +695,12 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera 0–3 grupperingsnivåer.
-- [ ] Implementera sorteringsriktning per nivå.
-- [ ] Implementera datumfältschecklista.
-- [ ] Implementera regler för tomma värden.
-- [ ] Implementera regler för datumgruppering efter år.
-- [ ] Implementera regler för talgruppering efter exakt värde.
+- [x] Implementera 0–3 grupperingsnivåer.
+- [x] Implementera sorteringsriktning per nivå.
+- [x] Implementera datumfältschecklista.
+- [x] Implementera regler för tomma värden.
+- [x] Implementera regler för datumgruppering efter år.
+- [x] Implementera regler för talgruppering efter exakt värde.
 
 ### Arbetspaket 7.3: Filter
 

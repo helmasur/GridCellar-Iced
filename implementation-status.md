@@ -30,7 +30,8 @@
 - Arbetspaket 6.3, duplicera och ta bort, är verifierat.
 - Fas 7, vyer, filter och sökning, pågår.
 - Arbetspaket 7.1, vyhantering, är verifierat.
-- Arbetspaket 7.2, gruppering och datumfältsval, är nästa arbetspaket.
+- Arbetspaket 7.2, gruppering och datumfältsval, är verifierat.
+- Arbetspaket 7.3, filter, är nästa arbetspaket.
 
 ## Blockeringar
 
