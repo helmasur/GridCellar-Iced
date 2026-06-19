@@ -217,7 +217,7 @@ Steg:
 
 ## Fas 2: Körbar grund
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Syfte:
 
@@ -230,7 +230,7 @@ Bygger på:
 
 ### Arbetspaket 2.1: Projektgrund
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -245,15 +245,15 @@ Verifiering:
 
 Steg:
 
-- [ ] Skapa implementationens projektkatalog.
-- [ ] Skapa minimal körbar app.
-- [ ] Dokumentera startkommando.
-- [ ] Dokumentera build/check-kommando.
-- [ ] Lägg in README eller motsvarande statusfil.
+- [x] Skapa implementationens projektkatalog.
+- [x] Skapa minimal körbar app.
+- [x] Dokumentera startkommando.
+- [x] Dokumentera build/check-kommando.
+- [x] Lägg in README eller motsvarande statusfil.
 
 ### Arbetspaket 2.2: Arbetsdisciplin
 
-Status: Ej påbörjad
+Status: Klar
 
 Scope:
 
@@ -266,9 +266,9 @@ Verifiering:
 
 Steg:
 
-- [ ] Skapa statussektion.
-- [ ] Skapa avvikelselogg.
-- [ ] Ange hur funktionella avvikelser dokumenteras.
+- [x] Skapa statussektion.
+- [x] Skapa avvikelselogg.
+- [x] Ange hur funktionella avvikelser dokumenteras.
 
 ## Fas 3: Kärnmodell, regler och lokal data
 

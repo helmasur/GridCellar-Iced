@@ -7,8 +7,11 @@
 - Arbetspaket 1.1, modellkontrakt, är klart.
 - Arbetspaket 1.2, testdata, är klart.
 - Arbetspaket 1.3, acceptanstest, är klart.
-- Fas 2, körbar grund, är nästa fas.
-- Ingen implementation har skapats.
+- Fas 2, körbar grund, är verifierad.
+- Arbetspaket 2.1, projektgrund, är verifierat.
+- Arbetspaket 2.2, arbetsdisciplin, är klart.
+- En minimal Iced-implementation har skapats.
+- Fas 3, kärnmodell, regler och lokal data, är nästa fas.
 
 ## Blockeringar
 
