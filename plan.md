@@ -561,7 +561,7 @@ Steg:
 
 ## Fas 6: Objekt och detaljpanel
 
-Status: Ej påbörjad
+Status: Pågår
 
 Syfte:
 
@@ -574,7 +574,7 @@ Bygger på:
 
 ### Arbetspaket 6.1: Visningsläge
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -587,10 +587,10 @@ Verifiering:
 
 Steg:
 
-- [ ] Visa objektets interna id diskret.
-- [ ] Visa alla globala fält.
-- [ ] Visa tomma värden diskret.
-- [ ] Implementera format: rubrikrad, normal rad, chip, längre textblock, bild, datum och tal där relevant.
+- [x] Visa objektets interna id diskret.
+- [x] Visa alla globala fält.
+- [x] Visa tomma värden diskret.
+- [x] Implementera format: rubrikrad, normal rad, chip, längre textblock, bild, datum och tal där relevant.
 
 ### Arbetspaket 6.2: Skapande och redigering
 

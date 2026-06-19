@@ -24,7 +24,9 @@
 - Arbetspaket 5.2, fältadministration, är verifierat.
 - Arbetspaket 5.3, listvärdesadministration, är verifierat.
 - Arbetspaket 5.4, global diagrametikett, är verifierat.
-- Fas 6, objekt och detaljpanel, är nästa fas.
+- Fas 6, objekt och detaljpanel, pågår.
+- Arbetspaket 6.1, visningsläge, är verifierat.
+- Arbetspaket 6.2, skapande och redigering, är nästa arbetspaket.
 
 ## Blockeringar
 

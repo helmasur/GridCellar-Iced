@@ -1,7 +1,7 @@
 use gridcellar::label::diagram_label;
 use gridcellar::model::{
-    DetailFormat, Field, FieldId, FieldType, ListValue, ListValueId, Project, ProjectId, TimeRange,
-    ValueMode, ViewId,
+    DetailFormat, Field, FieldId, FieldType, FieldValue, ListValue, ListValueId, ObjectId, Project,
+    ProjectId, TimeRange, ValueMode, ViewId,
 };
 use gridcellar::validation::{ValidationError, can_remove_list_value, can_remove_or_change_field};
 use iced::widget::{
@@ -23,6 +23,7 @@ struct App {
     next_field_number: usize,
     new_list_value_names: std::collections::BTreeMap<FieldId, String>,
     next_list_value_number: usize,
+    selected_object_id: Option<ObjectId>,
 }
 
 impl Default for App {
@@ -43,6 +44,7 @@ impl Default for App {
             next_field_number: 1,
             new_list_value_names: std::collections::BTreeMap::new(),
             next_list_value_number: 1,
+            selected_object_id: None,
         }
     }
 }
@@ -354,10 +356,7 @@ fn page<'a>(
 fn panel_overlay(app: &App, panel: Panel, size: Size) -> Element<'_, Message> {
     let narrow = size.width < NARROW_WIDTH;
     let (title, content): (&str, Element<'_, Message>) = match panel {
-        Panel::Detail => (
-            "Nytt objekt",
-            text("Detaljpanelen används senare för skapande, visning och redigering.").into(),
-        ),
+        Panel::Detail => ("Objekt", detail_view(app)),
         Panel::Configuration => ("Konfiguration", configuration_panel(app)),
         Panel::Filters => (
             "Filter",
@@ -430,6 +429,117 @@ fn configuration_panel(app: &App) -> Element<'_, Message> {
         .spacing(20),
     )
     .into()
+}
+
+fn detail_view(app: &App) -> Element<'_, Message> {
+    let object = app
+        .selected_object_id
+        .as_ref()
+        .and_then(|id| app.project.objects.iter().find(|object| object.id == *id))
+        .or_else(|| app.project.objects.first());
+
+    let Some(object) = object else {
+        return column![
+            text("Inget objekt är valt."),
+            text("Objekt kan skapas när skapandeläget implementeras i arbetspaket 6.2.").size(12),
+        ]
+        .spacing(8)
+        .into();
+    };
+
+    let mut fields =
+        column![text(format!("Internt id: {}", object.id.as_str())).size(12)].spacing(12);
+    for field in &app.project.fields {
+        let values = object
+            .values
+            .get(&field.id)
+            .map(Vec::as_slice)
+            .unwrap_or_default();
+        fields = fields.push(detail_field(app, field, values));
+    }
+
+    scrollable(fields).into()
+}
+
+fn detail_field<'a>(
+    app: &'a App,
+    field: &'a Field,
+    values: &'a [FieldValue],
+) -> Element<'a, Message> {
+    let formatted: Vec<String> = values
+        .iter()
+        .filter_map(|value| display_field_value(app, value))
+        .collect();
+    let empty = formatted.is_empty();
+    let combined = if empty {
+        "—".to_owned()
+    } else {
+        formatted.join(", ")
+    };
+
+    match field.detail_format {
+        DetailFormat::Title => {
+            if empty {
+                column![text(&field.name).size(14), text("—").size(22)]
+                    .spacing(2)
+                    .into()
+            } else {
+                text(combined).size(26).into()
+            }
+        }
+        DetailFormat::Chips => {
+            let mut chips = row![].spacing(6);
+            if empty {
+                chips = chips.push(container(text("—")).padding(6));
+            } else {
+                for value in formatted {
+                    chips = chips.push(
+                        container(text(value))
+                            .padding(6)
+                            .style(container::bordered_box),
+                    );
+                }
+            }
+            column![text(&field.name).size(14), chips].spacing(4).into()
+        }
+        DetailFormat::LongText => column![text(&field.name).size(14), text(combined).width(Fill),]
+            .spacing(4)
+            .into(),
+        DetailFormat::Image => column![
+            text(&field.name).size(14),
+            container(text(if empty { "—" } else { "Bild lagrad" }))
+                .padding(20)
+                .width(Fill)
+                .style(container::bordered_box),
+        ]
+        .spacing(4)
+        .into(),
+        DetailFormat::Date | DetailFormat::Number | DetailFormat::NormalRow => row![
+            text(&field.name).width(Length::FillPortion(1)),
+            text(combined).width(Length::FillPortion(2)),
+        ]
+        .spacing(12)
+        .into(),
+    }
+}
+
+fn display_field_value(app: &App, value: &FieldValue) -> Option<String> {
+    match value {
+        FieldValue::Text(value) => {
+            let value = value.trim();
+            (!value.is_empty()).then(|| value.to_owned())
+        }
+        FieldValue::Integer(value) => Some(value.to_string()),
+        FieldValue::Decimal(value) => Some(value.to_string()),
+        FieldValue::Date(value) => Some(value.as_str().to_owned()),
+        FieldValue::List(id) => app
+            .project
+            .list_values
+            .iter()
+            .find(|item| item.id == *id)
+            .map(|item| item.name.clone()),
+        FieldValue::Image(_) => Some("Bild lagrad".to_owned()),
+    }
 }
 
 fn project_settings(app: &App) -> Element<'_, Message> {
