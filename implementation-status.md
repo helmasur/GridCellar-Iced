@@ -19,11 +19,12 @@
 - Fas 4, huvudfönster och panelmodell, är verifierad.
 - Arbetspaket 4.1, huvudlayout, är verifierat.
 - Arbetspaket 4.2, paneler och dialogflöden, är verifierat.
-- Fas 5, projekt- och fältkonfiguration, pågår.
+- Fas 5, projekt- och fältkonfiguration, är verifierad.
 - Arbetspaket 5.1, projektinställningar, är verifierat.
 - Arbetspaket 5.2, fältadministration, är verifierat.
 - Arbetspaket 5.3, listvärdesadministration, är verifierat.
-- Arbetspaket 5.4, global diagrametikett, är nästa arbetspaket.
+- Arbetspaket 5.4, global diagrametikett, är verifierat.
+- Fas 6, objekt och detaljpanel, är nästa fas.
 
 ## Blockeringar
 

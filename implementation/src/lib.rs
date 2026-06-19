@@ -1,3 +1,4 @@
+pub mod label;
 pub mod model;
 pub mod persistence;
 pub mod validation;

@@ -455,7 +455,7 @@ Steg:
 
 ## Fas 5: Projekt- och fältkonfiguration
 
-Status: Pågår
+Status: Verifierad
 
 Syfte:
 
@@ -539,7 +539,7 @@ Steg:
 
 ### Arbetspaket 5.4: Global diagrametikett
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -554,10 +554,10 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera val av 1–5 etikettfält.
-- [ ] Implementera fast separator.
-- [ ] Implementera tomvärdesrensning.
-- [ ] Implementera fallback till internt id.
+- [x] Implementera val av 1–5 etikettfält.
+- [x] Implementera fast separator.
+- [x] Implementera tomvärdesrensning.
+- [x] Implementera fallback till internt id.
 
 ## Fas 6: Objekt och detaljpanel
 

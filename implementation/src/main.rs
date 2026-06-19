@@ -1,3 +1,4 @@
+use gridcellar::label::diagram_label;
 use gridcellar::model::{
     DetailFormat, Field, FieldId, FieldType, ListValue, ListValueId, Project, ProjectId, TimeRange,
     ValueMode, ViewId,
@@ -129,6 +130,10 @@ enum Message {
     MoveListValueUp(ListValueId),
     MoveListValueDown(ListValueId),
     RemoveListValue(ListValueId),
+    AddLabelField(FieldId),
+    MoveLabelFieldUp(usize),
+    MoveLabelFieldDown(usize),
+    RemoveLabelField(usize),
     AddObject,
     OpenConfiguration,
     OpenFilters,
@@ -206,6 +211,18 @@ fn update(app: &mut App, message: Message) {
         Message::MoveListValueUp(list_value_id) => move_list_value(app, &list_value_id, true),
         Message::MoveListValueDown(list_value_id) => move_list_value(app, &list_value_id, false),
         Message::RemoveListValue(list_value_id) => remove_list_value(app, &list_value_id),
+        Message::AddLabelField(field_id) => add_label_field(app, field_id),
+        Message::MoveLabelFieldUp(index) => {
+            if index > 0 {
+                app.project.diagram_label_field_ids.swap(index, index - 1);
+            }
+        }
+        Message::MoveLabelFieldDown(index) => {
+            if index + 1 < app.project.diagram_label_field_ids.len() {
+                app.project.diagram_label_field_ids.swap(index, index + 1);
+            }
+        }
+        Message::RemoveLabelField(index) => remove_label_field(app, index),
         Message::AddObject => app.panel = Some(Panel::Detail),
         Message::OpenConfiguration => app.panel = Some(Panel::Configuration),
         Message::OpenFilters => app.panel = Some(Panel::Filters),
@@ -288,7 +305,7 @@ fn page<'a>(
             text("Diagram").size(22),
             text("Tidslinjediagrammets huvudyta"),
             row![
-                container(text("Objektnamn"))
+                container(text(preview_diagram_label(app)))
                     .padding(8)
                     .width(Length::Fixed(
                         app.project.diagram_settings.name_column_width as f32
@@ -407,6 +424,8 @@ fn configuration_panel(app: &App) -> Element<'_, Message> {
             project_settings(app),
             rule::horizontal(1),
             field_administration(app),
+            rule::horizontal(1),
+            label_administration(app),
         ]
         .spacing(20),
     )
@@ -579,6 +598,51 @@ fn field_administration(app: &App) -> Element<'_, Message> {
         .unwrap_or_else(|| text("").into());
 
     fields.push(new_field).push(status).into()
+}
+
+fn label_administration(app: &App) -> Element<'_, Message> {
+    let mut content = column![text("Global diagrametikett").size(20)].spacing(8);
+
+    if app.project.fields.is_empty() {
+        return content
+            .push(text("Etiketten kan vara tom när projektet saknar fält."))
+            .into();
+    }
+
+    for (index, field_id) in app.project.diagram_label_field_ids.iter().enumerate() {
+        let name = app
+            .project
+            .fields
+            .iter()
+            .find(|field| field.id == *field_id)
+            .map(|field| field.name.as_str())
+            .unwrap_or("Saknat fält");
+        content = content.push(
+            row![
+                text(name).width(Fill),
+                button("Upp").on_press(Message::MoveLabelFieldUp(index)),
+                button("Ned").on_press(Message::MoveLabelFieldDown(index)),
+                button("Ta bort").on_press(Message::RemoveLabelField(index)),
+            ]
+            .spacing(6),
+        );
+    }
+
+    if app.project.diagram_label_field_ids.len() < 5 {
+        for field in app.project.fields.iter().filter(|field| {
+            !app.project.diagram_label_field_ids.contains(&field.id)
+                && field.field_type != FieldType::Image
+        }) {
+            content = content.push(
+                button(text(format!("Lägg till {}", field.name)))
+                    .on_press(Message::AddLabelField(field.id.clone())),
+            );
+        }
+    }
+
+    content
+        .push(text("Fältvärden separeras med:  – ").size(12))
+        .into()
 }
 
 fn list_value_administration<'a>(app: &'a App, field_id: &'a FieldId) -> Element<'a, Message> {
@@ -946,6 +1010,34 @@ fn remove_list_value(app: &mut App, list_value_id: &ListValueId) {
             app.field_status = Some("Listvärdet kan inte tas bort.".to_owned());
         }
     }
+}
+
+fn add_label_field(app: &mut App, field_id: FieldId) {
+    if app.project.diagram_label_field_ids.len() < 5
+        && !app.project.diagram_label_field_ids.contains(&field_id)
+    {
+        app.project.diagram_label_field_ids.push(field_id);
+        app.field_status = None;
+    }
+}
+
+fn remove_label_field(app: &mut App, index: usize) {
+    if app.project.fields.is_empty() || app.project.diagram_label_field_ids.len() > 1 {
+        if index < app.project.diagram_label_field_ids.len() {
+            app.project.diagram_label_field_ids.remove(index);
+            app.field_status = None;
+        }
+    } else {
+        app.field_status = Some("Minst ett etikettfält krävs när projektet har fält.".to_owned());
+    }
+}
+
+fn preview_diagram_label(app: &App) -> String {
+    app.project
+        .objects
+        .first()
+        .map(|object| diagram_label(&app.project, object))
+        .unwrap_or_else(|| "Objektnamn".to_owned())
 }
 
 fn field_errors(errors: &[ValidationError]) -> String {
