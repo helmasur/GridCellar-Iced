@@ -103,7 +103,7 @@ Steg:
 
 ## Fas 1: Kontrakt före implementation
 
-Status: Pågår
+Status: Klar
 
 Syfte:
 
@@ -183,7 +183,7 @@ Steg:
 
 ### Arbetspaket 1.3: Acceptanstest
 
-Status: Ej påbörjad
+Status: Klar
 
 Scope:
 
@@ -211,9 +211,9 @@ Verifiering:
 
 Steg:
 
-- [ ] Skapa `acceptance-tests.md`.
-- [ ] Skriv testfall per huvudområde.
-- [ ] Lägg till plats för testresultat.
+- [x] Skapa `acceptance-tests.md`.
+- [x] Skriv testfall per huvudområde.
+- [x] Lägg till plats för testresultat.
 
 ## Fas 2: Körbar grund
 

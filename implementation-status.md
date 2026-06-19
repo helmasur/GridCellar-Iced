@@ -3,10 +3,11 @@
 ## Aktuell status
 
 - Fas 0 är klar.
-- Fas 1 pågår.
+- Fas 1 är klar.
 - Arbetspaket 1.1, modellkontrakt, är klart.
 - Arbetspaket 1.2, testdata, är klart.
-- Arbetspaket 1.3, acceptanstest, är nästa arbetspaket.
+- Arbetspaket 1.3, acceptanstest, är klart.
+- Fas 2, körbar grund, är nästa fas.
 - Ingen implementation har skapats.
 
 ## Blockeringar
