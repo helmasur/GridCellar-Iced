@@ -1,8 +1,10 @@
 use std::collections::BTreeMap;
 
+use serde::{Deserialize, Serialize};
+
 macro_rules! id_type {
     ($name:ident) => {
-        #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+        #[derive(Clone, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
         pub struct $name(String);
 
         impl $name {
@@ -23,7 +25,7 @@ id_type!(ListValueId);
 id_type!(ObjectId);
 id_type!(ViewId);
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Project {
     pub id: ProjectId,
     pub name: String,
@@ -52,7 +54,7 @@ impl Project {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct DiagramSettings {
     pub row_height: u16,
     pub group_row_height: u16,
@@ -71,7 +73,7 @@ impl Default for DiagramSettings {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum TimeRange {
     ShowAll,
     FiveYears,
@@ -82,7 +84,7 @@ pub enum TimeRange {
     },
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Field {
     pub id: FieldId,
     pub project_id: ProjectId,
@@ -93,7 +95,7 @@ pub struct Field {
     pub detail_format: DetailFormat,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum FieldType {
     Text,
     Number(NumberKind),
@@ -102,19 +104,19 @@ pub enum FieldType {
     Image,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum NumberKind {
     Integer,
     Decimal,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ValueMode {
     Single,
     Multiple,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum DetailFormat {
     NormalRow,
     Title,
@@ -125,7 +127,7 @@ pub enum DetailFormat {
     Number,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct ListValue {
     pub id: ListValueId,
     pub field_id: FieldId,
@@ -133,14 +135,14 @@ pub struct ListValue {
     pub order: usize,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Object {
     pub id: ObjectId,
     pub project_id: ProjectId,
     pub values: BTreeMap<FieldId, Vec<FieldValue>>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum FieldValue {
     Text(String),
     Integer(i64),
@@ -150,7 +152,7 @@ pub enum FieldValue {
     Image(ImageData),
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct CalendarDate(String);
 
 impl CalendarDate {
@@ -163,12 +165,12 @@ impl CalendarDate {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct ImageData {
     pub bytes: Vec<u8>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct View {
     pub id: ViewId,
     pub project_id: ProjectId,
@@ -191,19 +193,19 @@ impl View {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Grouping {
     pub field_id: FieldId,
     pub direction: SortDirection,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum SortDirection {
     Ascending,
     Descending,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Filter {
     pub field_id: FieldId,
     pub operator: FilterOperator,
@@ -211,7 +213,7 @@ pub struct Filter {
     pub include_empty: bool,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum FilterOperator {
     Contains,
     Equals,
@@ -225,7 +227,7 @@ pub enum FilterOperator {
     IsEmpty,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum FilterOperand {
     Text(String),
     Integer(i64),

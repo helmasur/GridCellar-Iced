@@ -272,7 +272,7 @@ Steg:
 
 ## Fas 3: Kärnmodell, regler och lokal data
 
-Status: Pågår
+Status: Verifierad
 
 Syfte:
 
@@ -375,7 +375,7 @@ Steg:
 
 ### Arbetspaket 3.4: Lokal persistens
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -388,10 +388,10 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera lokal sparning.
-- [ ] Implementera lokal laddning.
-- [ ] Testa tomt standardprojekt.
-- [ ] Testa ändringar i fält, objekt och vyer.
+- [x] Implementera lokal sparning.
+- [x] Implementera lokal laddning.
+- [x] Testa tomt standardprojekt.
+- [x] Testa ändringar i fält, objekt och vyer.
 
 ## Fas 4: Huvudfönster och panelmodell
 
