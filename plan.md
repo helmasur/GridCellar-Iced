@@ -644,7 +644,7 @@ Steg:
 
 ## Fas 7: Vyer, filter och sökning
 
-Status: Pågår
+Status: Verifierad
 
 Syfte:
 
@@ -728,7 +728,7 @@ Steg:
 
 ### Arbetspaket 7.4: Fritextsökning
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -742,10 +742,10 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera sökkontroll.
-- [ ] Implementera sökutvärdering.
-- [ ] Implementera aktiv status.
-- [ ] Implementera rensa sökning.
+- [x] Implementera sökkontroll.
+- [x] Implementera sökutvärdering.
+- [x] Implementera aktiv status.
+- [x] Implementera rensa sökning.
 
 ## Fas 8: Huvuddiagram
 

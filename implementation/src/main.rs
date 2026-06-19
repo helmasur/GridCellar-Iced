@@ -143,6 +143,7 @@ enum Panel {
 #[derive(Clone, Debug)]
 enum Message {
     SearchChanged(String),
+    ClearSearch,
     ViewSelected(String),
     NewView,
     SaveView,
@@ -222,6 +223,7 @@ fn main() -> iced::Result {
 fn update(app: &mut App, message: Message) {
     match message {
         Message::SearchChanged(value) => app.search = value,
+        Message::ClearSearch => app.search.clear(),
         Message::ViewSelected(value) => select_view(app, &value),
         Message::NewView => new_view(app),
         Message::SaveView => save_view(app),
@@ -446,6 +448,23 @@ fn page<'a>(
         column![
             text("Diagram").size(22),
             text("Tidslinjediagrammets huvudyta"),
+            if app.search.trim().is_empty() {
+                row![text("")]
+            } else {
+                row![
+                    text(format!(
+                        "Sökning aktiv · {} träffar",
+                        gridcellar::view::calculate_view(
+                            &app.project,
+                            &app.view_draft,
+                            Some(&app.search)
+                        )
+                        .len()
+                    )),
+                    button("Rensa sökning").on_press(Message::ClearSearch),
+                ]
+                .spacing(8)
+            },
             text(if app.view_dirty {
                 "Osparade vyändringar"
             } else {
