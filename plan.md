@@ -561,7 +561,7 @@ Steg:
 
 ## Fas 6: Objekt och detaljpanel
 
-Status: Pågår
+Status: Verifierad
 
 Syfte:
 
@@ -623,7 +623,7 @@ Steg:
 
 ### Arbetspaket 6.3: Duplicera och ta bort
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -637,10 +637,10 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera duplicering.
-- [ ] Öppna duplicerat objekt i redigeringsläge innan sparande.
-- [ ] Implementera radering.
-- [ ] Implementera bekräftelse.
+- [x] Implementera duplicering.
+- [x] Öppna duplicerat objekt i redigeringsläge innan sparande.
+- [x] Implementera radering.
+- [x] Implementera bekräftelse.
 
 ## Fas 7: Vyer, filter och sökning
 

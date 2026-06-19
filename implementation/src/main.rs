@@ -156,6 +156,10 @@ enum Message {
     RemoveImage(FieldId),
     SaveObject,
     ResetObject,
+    DuplicateObject,
+    RequestDeleteObject,
+    ConfirmDeleteObject,
+    CancelDeleteObject,
     AddObject,
     OpenConfiguration,
     OpenFilters,
@@ -279,6 +283,12 @@ fn update(app: &mut App, message: Message) {
         }
         Message::SaveObject => save_object(app),
         Message::ResetObject => reset_object(app),
+        Message::DuplicateObject => duplicate_object(app),
+        Message::RequestDeleteObject => {
+            app.object_status = Some("Bekräfta radering: åtgärden kan inte ångras.".to_owned())
+        }
+        Message::ConfirmDeleteObject => delete_object(app),
+        Message::CancelDeleteObject => app.object_status = None,
     }
 }
 
@@ -502,9 +512,27 @@ fn detail_view(app: &App) -> Element<'_, Message> {
 
     let mut fields = column![
         text(format!("Internt id: {}", object.id.as_str())).size(12),
-        button("Redigera").on_press(Message::StartEditingObject),
+        row![
+            button("Redigera").on_press(Message::StartEditingObject),
+            button("Duplicera").on_press(Message::DuplicateObject),
+            button("Ta bort").on_press(Message::RequestDeleteObject),
+        ]
+        .spacing(8),
     ]
     .spacing(12);
+    if app.object_status.is_some() {
+        fields = fields.push(
+            column![
+                text(app.object_status.as_deref().unwrap_or("")),
+                row![
+                    button("Bekräfta radering").on_press(Message::ConfirmDeleteObject),
+                    button("Avbryt").on_press(Message::CancelDeleteObject),
+                ]
+                .spacing(8),
+            ]
+            .spacing(6),
+        );
+    }
     for field in &app.project.fields {
         let values = object
             .values
@@ -1466,6 +1494,36 @@ fn save_object(app: &mut App) {
 fn reset_object(app: &mut App) {
     app.object_draft = app.saved_object_draft.clone();
     app.object_status = None;
+}
+
+fn duplicate_object(app: &mut App) {
+    let object = app
+        .selected_object_id
+        .as_ref()
+        .and_then(|id| app.project.objects.iter().find(|object| object.id == *id))
+        .or_else(|| app.project.objects.first());
+    if let Some(object) = object {
+        let mut draft = ObjectDraft::from_object(&app.project, object);
+        draft.object_id = None;
+        app.saved_object_draft = Some(draft.clone());
+        app.object_draft = Some(draft);
+        app.selected_object_id = None;
+        app.object_status = None;
+    }
+}
+
+fn delete_object(app: &mut App) {
+    let Some(object_id) = app
+        .selected_object_id
+        .clone()
+        .or_else(|| app.project.objects.first().map(|object| object.id.clone()))
+    else {
+        return;
+    };
+    app.project.objects.retain(|object| object.id != object_id);
+    app.selected_object_id = None;
+    app.object_status = None;
+    app.panel = None;
 }
 
 fn field_errors(errors: &[ValidationError]) -> String {

@@ -24,10 +24,11 @@
 - Arbetspaket 5.2, fältadministration, är verifierat.
 - Arbetspaket 5.3, listvärdesadministration, är verifierat.
 - Arbetspaket 5.4, global diagrametikett, är verifierat.
-- Fas 6, objekt och detaljpanel, pågår.
+- Fas 6, objekt och detaljpanel, är verifierad.
 - Arbetspaket 6.1, visningsläge, är verifierat.
 - Arbetspaket 6.2, skapande och redigering, är verifierat.
-- Arbetspaket 6.3, duplicera och ta bort, är nästa arbetspaket.
+- Arbetspaket 6.3, duplicera och ta bort, är verifierat.
+- Fas 7, vyer, filter och sökning, är nästa fas.
 
 ## Blockeringar
 
