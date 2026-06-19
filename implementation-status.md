@@ -22,7 +22,8 @@
 - Fas 5, projekt- och fältkonfiguration, pågår.
 - Arbetspaket 5.1, projektinställningar, är verifierat.
 - Arbetspaket 5.2, fältadministration, är verifierat.
-- Arbetspaket 5.3, listvärdesadministration, är nästa arbetspaket.
+- Arbetspaket 5.3, listvärdesadministration, är verifierat.
+- Arbetspaket 5.4, global diagrametikett, är nästa arbetspaket.
 
 ## Blockeringar
 

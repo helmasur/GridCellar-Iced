@@ -1,7 +1,8 @@
 use gridcellar::model::{
-    DetailFormat, Field, FieldId, FieldType, Project, ProjectId, TimeRange, ValueMode, ViewId,
+    DetailFormat, Field, FieldId, FieldType, ListValue, ListValueId, Project, ProjectId, TimeRange,
+    ValueMode, ViewId,
 };
-use gridcellar::validation::{ValidationError, can_remove_or_change_field};
+use gridcellar::validation::{ValidationError, can_remove_list_value, can_remove_or_change_field};
 use iced::widget::{
     button, checkbox, column, container, opaque, pick_list, responsive, row, rule, scrollable,
     stack, text, text_input,
@@ -19,6 +20,8 @@ struct App {
     new_field: FieldDraft,
     field_status: Option<String>,
     next_field_number: usize,
+    new_list_value_names: std::collections::BTreeMap<FieldId, String>,
+    next_list_value_number: usize,
 }
 
 impl Default for App {
@@ -37,6 +40,8 @@ impl Default for App {
             new_field: FieldDraft::default(),
             field_status: None,
             next_field_number: 1,
+            new_list_value_names: std::collections::BTreeMap::new(),
+            next_list_value_number: 1,
         }
     }
 }
@@ -118,6 +123,12 @@ enum Message {
     MoveFieldUp(usize),
     MoveFieldDown(usize),
     RemoveField(usize),
+    NewListValueNameChanged(FieldId, String),
+    CreateListValue(FieldId),
+    RenameListValue(ListValueId, String),
+    MoveListValueUp(ListValueId),
+    MoveListValueDown(ListValueId),
+    RemoveListValue(ListValueId),
     AddObject,
     OpenConfiguration,
     OpenFilters,
@@ -185,6 +196,16 @@ fn update(app: &mut App, message: Message) {
             }
         }
         Message::RemoveField(index) => remove_field(app, index),
+        Message::NewListValueNameChanged(field_id, value) => {
+            app.new_list_value_names.insert(field_id, value);
+        }
+        Message::CreateListValue(field_id) => create_list_value(app, &field_id),
+        Message::RenameListValue(list_value_id, value) => {
+            rename_list_value(app, &list_value_id, value)
+        }
+        Message::MoveListValueUp(list_value_id) => move_list_value(app, &list_value_id, true),
+        Message::MoveListValueDown(list_value_id) => move_list_value(app, &list_value_id, false),
+        Message::RemoveListValue(list_value_id) => remove_list_value(app, &list_value_id),
         Message::AddObject => app.panel = Some(Panel::Detail),
         Message::OpenConfiguration => app.panel = Some(Panel::Configuration),
         Message::OpenFilters => app.panel = Some(Panel::Filters),
@@ -476,44 +497,50 @@ fn field_administration(app: &App) -> Element<'_, Message> {
             object_count
         );
 
+        let mut field_content = column![
+            text_input("Fältnamn", &field.name)
+                .on_input(move |value| Message::RenameField(index, value)),
+            row![
+                pick_list(
+                    field_type_options(),
+                    Some(field_type_label(&field.field_type)),
+                    move |value| Message::ChangeFieldType(index, value),
+                ),
+                pick_list(
+                    value_mode_options(),
+                    Some(value_mode_label(field.value_mode)),
+                    move |value| Message::ChangeFieldValueMode(index, value),
+                ),
+                pick_list(
+                    detail_format_options(),
+                    Some(detail_format_label(field.detail_format)),
+                    move |value| Message::ChangeFieldFormat(index, value),
+                ),
+            ]
+            .spacing(8),
+            checkbox(field.required)
+                .label("Obligatoriskt")
+                .on_toggle(move |value| Message::ChangeFieldRequired(index, value)),
+            text(usage).size(12),
+            row![
+                button("Upp").on_press(Message::MoveFieldUp(index)),
+                button("Ned").on_press(Message::MoveFieldDown(index)),
+                button("Ta bort").on_press(Message::RemoveField(index)),
+            ]
+            .spacing(8),
+        ]
+        .spacing(8);
+
+        if field.field_type == FieldType::List {
+            field_content = field_content
+                .push(rule::horizontal(1))
+                .push(list_value_administration(app, &field.id));
+        }
+
         fields = fields.push(
-            container(
-                column![
-                    text_input("Fältnamn", &field.name)
-                        .on_input(move |value| Message::RenameField(index, value)),
-                    row![
-                        pick_list(
-                            field_type_options(),
-                            Some(field_type_label(&field.field_type)),
-                            move |value| Message::ChangeFieldType(index, value),
-                        ),
-                        pick_list(
-                            value_mode_options(),
-                            Some(value_mode_label(field.value_mode)),
-                            move |value| Message::ChangeFieldValueMode(index, value),
-                        ),
-                        pick_list(
-                            detail_format_options(),
-                            Some(detail_format_label(field.detail_format)),
-                            move |value| Message::ChangeFieldFormat(index, value),
-                        ),
-                    ]
-                    .spacing(8),
-                    checkbox(field.required)
-                        .label("Obligatoriskt")
-                        .on_toggle(move |value| Message::ChangeFieldRequired(index, value)),
-                    text(usage).size(12),
-                    row![
-                        button("Upp").on_press(Message::MoveFieldUp(index)),
-                        button("Ned").on_press(Message::MoveFieldDown(index)),
-                        button("Ta bort").on_press(Message::RemoveField(index)),
-                    ]
-                    .spacing(8),
-                ]
-                .spacing(8),
-            )
-            .padding(10)
-            .style(container::bordered_box),
+            container(field_content)
+                .padding(10)
+                .style(container::bordered_box),
         );
     }
 
@@ -552,6 +579,98 @@ fn field_administration(app: &App) -> Element<'_, Message> {
         .unwrap_or_else(|| text("").into());
 
     fields.push(new_field).push(status).into()
+}
+
+fn list_value_administration<'a>(app: &'a App, field_id: &'a FieldId) -> Element<'a, Message> {
+    let mut values = column![text("Listvärden").size(16)].spacing(6);
+    let mut list_values: Vec<&ListValue> = app
+        .project
+        .list_values
+        .iter()
+        .filter(|value| value.field_id == *field_id)
+        .collect();
+    list_values.sort_by_key(|value| value.order);
+
+    if list_values.is_empty() {
+        values = values.push(text("Listan är tom."));
+    }
+
+    for value in list_values {
+        let value_id = value.id.clone();
+        let object_count = app
+            .project
+            .objects
+            .iter()
+            .filter(|object| {
+                object.values.values().flatten().any(|field_value| {
+                    matches!(
+                        field_value,
+                        gridcellar::model::FieldValue::List(id) if id == &value_id
+                    )
+                })
+            })
+            .count();
+        let filter_count = app
+            .project
+            .views
+            .iter()
+            .flat_map(|view| &view.filters)
+            .filter(|filter| {
+                filter.operands.iter().any(|operand| {
+                    matches!(
+                        operand,
+                        gridcellar::model::FilterOperand::ListValue(id) if id == &value_id
+                    )
+                })
+            })
+            .count();
+        let rename_id = value.id.clone();
+        let up_id = value.id.clone();
+        let down_id = value.id.clone();
+        let remove_id = value.id.clone();
+
+        values = values.push(
+            column![
+                row![
+                    text_input("Listvärde", &value.name)
+                        .on_input(move |name| Message::RenameListValue(rename_id.clone(), name))
+                        .width(Fill),
+                    button("Upp").on_press(Message::MoveListValueUp(up_id)),
+                    button("Ned").on_press(Message::MoveListValueDown(down_id)),
+                    button("Ta bort").on_press(Message::RemoveListValue(remove_id)),
+                ]
+                .spacing(6),
+                text(format!(
+                    "Används av {object_count} objekt och {filter_count} filter"
+                ))
+                .size(12),
+            ]
+            .spacing(4),
+        );
+    }
+
+    let new_name = app
+        .new_list_value_names
+        .get(field_id)
+        .map(String::as_str)
+        .unwrap_or("");
+    let change_field_id = field_id.clone();
+    let create_field_id = field_id.clone();
+
+    values
+        .push(
+            row![
+                text_input("Nytt listvärde", new_name)
+                    .on_input(move |name| Message::NewListValueNameChanged(
+                        change_field_id.clone(),
+                        name
+                    ))
+                    .width(Fill),
+                button("Lägg till").on_press(Message::CreateListValue(create_field_id)),
+            ]
+            .spacing(6),
+        )
+        .into()
 }
 
 fn create_field(app: &mut App) {
@@ -686,6 +805,146 @@ fn remove_field(app: &mut App, index: usize) {
             app.field_status = Some("Fältet togs bort.".to_owned());
         }
         Err(errors) => app.field_status = Some(field_errors(&errors)),
+    }
+}
+
+fn create_list_value(app: &mut App, field_id: &FieldId) {
+    let name = app
+        .new_list_value_names
+        .get(field_id)
+        .map(|name| name.trim())
+        .unwrap_or("");
+    if name.is_empty()
+        || app
+            .project
+            .list_values
+            .iter()
+            .any(|value| value.field_id == *field_id && value.name.eq_ignore_ascii_case(name))
+    {
+        app.field_status = Some("Listvärdesnamnet måste vara ifyllt och unikt.".to_owned());
+        return;
+    }
+
+    let order = app
+        .project
+        .list_values
+        .iter()
+        .filter(|value| value.field_id == *field_id)
+        .count();
+    app.project.list_values.push(ListValue {
+        id: ListValueId::new(format!("list-value-{}", app.next_list_value_number)),
+        field_id: field_id.clone(),
+        name: name.to_owned(),
+        order,
+    });
+    app.next_list_value_number += 1;
+    app.new_list_value_names.remove(field_id);
+    app.field_status = Some("Listvärdet skapades.".to_owned());
+}
+
+fn rename_list_value(app: &mut App, list_value_id: &ListValueId, name: String) {
+    let Some(field_id) = app
+        .project
+        .list_values
+        .iter()
+        .find(|value| value.id == *list_value_id)
+        .map(|value| value.field_id.clone())
+    else {
+        return;
+    };
+    let duplicate = app.project.list_values.iter().any(|value| {
+        value.field_id == field_id
+            && value.id != *list_value_id
+            && value.name.eq_ignore_ascii_case(name.trim())
+    });
+    if name.trim().is_empty() || duplicate {
+        app.field_status = Some("Listvärdesnamnet måste vara ifyllt och unikt.".to_owned());
+    } else if let Some(value) = app
+        .project
+        .list_values
+        .iter_mut()
+        .find(|value| value.id == *list_value_id)
+    {
+        value.name = name;
+        app.field_status = None;
+    }
+}
+
+fn move_list_value(app: &mut App, list_value_id: &ListValueId, upward: bool) {
+    let Some(current) = app
+        .project
+        .list_values
+        .iter()
+        .find(|value| value.id == *list_value_id)
+        .cloned()
+    else {
+        return;
+    };
+    let target_order = if upward {
+        current.order.checked_sub(1)
+    } else {
+        Some(current.order + 1)
+    };
+    let Some(target_order) = target_order else {
+        return;
+    };
+    let Some(target_id) = app
+        .project
+        .list_values
+        .iter()
+        .find(|value| value.field_id == current.field_id && value.order == target_order)
+        .map(|value| value.id.clone())
+    else {
+        return;
+    };
+
+    for value in &mut app.project.list_values {
+        if value.id == current.id {
+            value.order = target_order;
+        } else if value.id == target_id {
+            value.order = current.order;
+        }
+    }
+}
+
+fn remove_list_value(app: &mut App, list_value_id: &ListValueId) {
+    match can_remove_list_value(&app.project, list_value_id) {
+        Ok(()) => {
+            let field_id = app
+                .project
+                .list_values
+                .iter()
+                .find(|value| value.id == *list_value_id)
+                .map(|value| value.field_id.clone());
+            app.project
+                .list_values
+                .retain(|value| value.id != *list_value_id);
+            if let Some(field_id) = field_id {
+                let mut values: Vec<&mut ListValue> = app
+                    .project
+                    .list_values
+                    .iter_mut()
+                    .filter(|value| value.field_id == field_id)
+                    .collect();
+                values.sort_by_key(|value| value.order);
+                for (order, value) in values.into_iter().enumerate() {
+                    value.order = order;
+                }
+            }
+            app.field_status = Some("Listvärdet togs bort.".to_owned());
+        }
+        Err(ValidationError::ListValueIsUsed {
+            object_count,
+            filter_count,
+            ..
+        }) => {
+            app.field_status = Some(format!(
+                "Listvärdet används av {object_count} objekt och {filter_count} filter."
+            ));
+        }
+        Err(_) => {
+            app.field_status = Some("Listvärdet kan inte tas bort.".to_owned());
+        }
     }
 }
 

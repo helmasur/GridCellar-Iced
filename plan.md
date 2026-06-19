@@ -516,7 +516,7 @@ Steg:
 
 ### Arbetspaket 5.3: Listvärdesadministration
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -530,12 +530,12 @@ Verifiering:
 
 Steg:
 
-- [ ] Visa listvärden per listfält.
-- [ ] Skapa listvärde.
-- [ ] Byt namn på listvärde.
-- [ ] Sortera listvärden med upp-/nedkontroller.
-- [ ] Visa användningsantal.
-- [ ] Ta bort listvärde enligt spärrregler.
+- [x] Visa listvärden per listfält.
+- [x] Skapa listvärde.
+- [x] Byt namn på listvärde.
+- [x] Sortera listvärden med upp-/nedkontroller.
+- [x] Visa användningsantal.
+- [x] Ta bort listvärde enligt spärrregler.
 
 ### Arbetspaket 5.4: Global diagrametikett
 
