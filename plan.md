@@ -340,7 +340,7 @@ Steg:
 
 ### Arbetspaket 3.3: Vyberäkning
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -366,12 +366,12 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera filterutvärdering.
-- [ ] Implementera fritextsökning.
-- [ ] Implementera gruppering.
-- [ ] Implementera sortering.
-- [ ] Implementera datumurval.
-- [ ] Implementera radunderlag för diagram.
+- [x] Implementera filterutvärdering.
+- [x] Implementera fritextsökning.
+- [x] Implementera gruppering.
+- [x] Implementera sortering.
+- [x] Implementera datumurval.
+- [x] Implementera radunderlag för diagram.
 
 ### Arbetspaket 3.4: Lokal persistens
 
