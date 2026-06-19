@@ -13,7 +13,8 @@
 - En minimal Iced-implementation har skapats.
 - Fas 3, kärnmodell, regler och lokal data, pågår.
 - Arbetspaket 3.1, datamodell, är verifierat.
-- Arbetspaket 3.2, validering och spärrregler, är nästa arbetspaket.
+- Arbetspaket 3.2, validering och spärrregler, är verifierat.
+- Arbetspaket 3.3, vyberäkning, är nästa arbetspaket.
 
 ## Blockeringar
 

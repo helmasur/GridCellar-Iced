@@ -308,7 +308,7 @@ Steg:
 
 ### Arbetspaket 3.2: Validering och spärrregler
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -332,11 +332,11 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera fältregler.
-- [ ] Implementera objektregler.
-- [ ] Implementera listvärdesregler.
-- [ ] Implementera vy- och filterregler.
-- [ ] Implementera beroendekontroller.
+- [x] Implementera fältregler.
+- [x] Implementera objektregler.
+- [x] Implementera listvärdesregler.
+- [x] Implementera vy- och filterregler.
+- [x] Implementera beroendekontroller.
 
 ### Arbetspaket 3.3: Vyberäkning
 
