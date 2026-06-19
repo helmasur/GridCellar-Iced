@@ -785,7 +785,7 @@ Steg:
 
 ### Arbetspaket 8.2: Diagramlayout
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -800,13 +800,13 @@ Verifiering:
 
 Steg:
 
-- [ ] Implementera diagramyta.
-- [ ] Implementera radhöjd.
-- [ ] Implementera grupprader.
-- [ ] Implementera namnkolumn.
-- [ ] Implementera x-axel längst ned.
-- [ ] Implementera vertikal navigation.
-- [ ] Implementera horisontell navigation.
+- [x] Implementera diagramyta.
+- [x] Implementera radhöjd.
+- [x] Implementera grupprader.
+- [x] Implementera namnkolumn.
+- [x] Implementera x-axel längst ned.
+- [x] Implementera vertikal navigation.
+- [x] Implementera horisontell navigation.
 
 ### Arbetspaket 8.3: Datumlinjer, punkter och interaktion
 

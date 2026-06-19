@@ -35,7 +35,8 @@
 - Arbetspaket 7.4, fritextsökning, är verifierat.
 - Fas 8, huvuddiagram, pågår.
 - Arbetspaket 8.1, diagramradmodell, är verifierat.
-- Arbetspaket 8.2, diagramlayout, är nästa arbetspaket.
+- Arbetspaket 8.2, diagramlayout, är verifierat.
+- Arbetspaket 8.3, datumlinjer, punkter och interaktion, är nästa arbetspaket.
 
 ## Blockeringar
 

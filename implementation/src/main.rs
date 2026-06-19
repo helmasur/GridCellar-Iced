@@ -207,6 +207,7 @@ enum Message {
     RequestDeleteObject,
     ConfirmDeleteObject,
     CancelDeleteObject,
+    SelectObject(ObjectId),
     AddObject,
     OpenConfiguration,
     OpenFilters,
@@ -365,6 +366,10 @@ fn update(app: &mut App, message: Message) {
         }
         Message::ConfirmDeleteObject => delete_object(app),
         Message::CancelDeleteObject => app.object_status = None,
+        Message::SelectObject(object_id) => {
+            app.selected_object_id = Some(object_id);
+            app.panel = Some(Panel::Detail);
+        }
     }
 }
 
@@ -471,24 +476,7 @@ fn page<'a>(
                 "Vyn är sparad"
             })
             .size(12),
-            row![
-                container(text(preview_diagram_label(app)))
-                    .padding(8)
-                    .width(Length::Fixed(
-                        app.project.diagram_settings.name_column_width as f32
-                    ))
-                    .height(Length::Fixed(
-                        app.project.diagram_settings.row_height as f32
-                    ))
-                    .style(container::bordered_box),
-                container(text("Tidslinje"))
-                    .padding(8)
-                    .width(Fill)
-                    .height(Length::Fixed(
-                        app.project.diagram_settings.row_height as f32
-                    ))
-                    .style(container::bordered_box),
-            ],
+            chart_layout(app),
             text(format!(
                 "Tillgänglig yta: {:.0} × {:.0}",
                 size.width, size.height
@@ -580,6 +568,89 @@ fn range_picker(app: &App) -> Element<'_, Message> {
         Message::RangeSelected,
     )
     .placeholder("Tidsintervall")
+    .into()
+}
+
+fn chart_layout(app: &App) -> Element<'_, Message> {
+    let rows = gridcellar::chart::chart_rows(
+        &app.project,
+        &app.view_draft,
+        (!app.search.trim().is_empty()).then_some(app.search.as_str()),
+    );
+    let empty = rows.is_empty();
+    let mut content = column![].spacing(0);
+    for row_data in rows {
+        match row_data {
+            gridcellar::chart::ChartRow::Group { level, label } => {
+                content = content.push(
+                    container(text(format!("{}{}", "  ".repeat(level), label)))
+                        .padding(6)
+                        .height(Length::Fixed(
+                            app.project.diagram_settings.group_row_height as f32,
+                        ))
+                        .width(Fill)
+                        .style(container::bordered_box),
+                );
+            }
+            gridcellar::chart::ChartRow::Object(row_data) => {
+                let timeline = if row_data.dates.is_empty() {
+                    "Inga visade datum".to_owned()
+                } else {
+                    format!(
+                        "{}  ●  {}",
+                        row_data.line_start.as_deref().unwrap_or(""),
+                        row_data.line_end.as_deref().unwrap_or("")
+                    )
+                };
+                content = content.push(
+                    row![
+                        container(
+                            button(text(row_data.label))
+                                .on_press(Message::SelectObject(row_data.object_id)),
+                        )
+                        .padding(4)
+                        .width(Length::Fixed(
+                            app.project.diagram_settings.name_column_width as f32,
+                        ))
+                        .height(Length::Fixed(
+                            app.project.diagram_settings.row_height as f32,
+                        ))
+                        .style(container::bordered_box),
+                        container(text(timeline))
+                            .padding(8)
+                            .width(Length::Fixed(900.0))
+                            .height(Length::Fixed(
+                                app.project.diagram_settings.row_height as f32,
+                            ))
+                            .style(if row_data.missing_visible_dates {
+                                container::dark
+                            } else {
+                                container::bordered_box
+                            }),
+                    ]
+                    .spacing(0),
+                );
+            }
+        }
+    }
+    if empty {
+        content = content.push(text("Inga objekt att visa."));
+    }
+    let axis = row![
+        container(text("Objekt"))
+            .padding(6)
+            .width(Length::Fixed(
+                app.project.diagram_settings.name_column_width as f32,
+            )),
+        container(text("Tid  ← horisontell panorering →"))
+            .padding(6)
+            .width(Length::Fixed(900.0)),
+    ];
+    column![
+        scrollable(scrollable(content).horizontal()).height(Fill),
+        axis,
+    ]
+    .height(Fill)
     .into()
 }
 
@@ -1593,14 +1664,6 @@ fn remove_label_field(app: &mut App, index: usize) {
     } else {
         app.field_status = Some("Minst ett etikettfält krävs när projektet har fält.".to_owned());
     }
-}
-
-fn preview_diagram_label(app: &App) -> String {
-    app.project
-        .objects
-        .first()
-        .map(|object| diagram_label(&app.project, object))
-        .unwrap_or_else(|| "Objektnamn".to_owned())
 }
 
 fn start_creating_object(app: &mut App) {
