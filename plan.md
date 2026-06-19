@@ -395,7 +395,7 @@ Steg:
 
 ## Fas 4: Huvudfönster och panelmodell
 
-Status: Pågår
+Status: Verifierad
 
 Syfte:
 
@@ -433,7 +433,7 @@ Steg:
 
 ### Arbetspaket 4.2: Paneler och dialogflöden
 
-Status: Ej påbörjad
+Status: Verifierad
 
 Scope:
 
@@ -447,11 +447,11 @@ Verifiering:
 
 Steg:
 
-- [ ] Skapa detaljpanel.
-- [ ] Skapa konfigurationspanel.
-- [ ] Skapa filterpanel.
-- [ ] Skapa datumfältspanel.
-- [ ] Kontrollera grundläggande stängning och fokusflöde där relevant.
+- [x] Skapa detaljpanel.
+- [x] Skapa konfigurationspanel.
+- [x] Skapa filterpanel.
+- [x] Skapa datumfältspanel.
+- [x] Kontrollera grundläggande stängning och fokusflöde där relevant.
 
 ## Fas 5: Projekt- och fältkonfiguration
 
